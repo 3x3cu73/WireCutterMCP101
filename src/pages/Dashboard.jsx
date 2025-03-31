@@ -52,6 +52,7 @@ export const Dashboard = () => {
             return arrayMove(jsonData,oldPosition,newPosition)
 
         })
+        console.log(jsonData)
 
     }
 
