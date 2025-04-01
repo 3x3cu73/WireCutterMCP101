@@ -2,7 +2,7 @@ import {SortableContext, verticalListSortingStrategy} from "@dnd-kit/sortable";
 import {Task} from "./task..jsx";
 
 export const Column=({tasks,openModal})=>{
-    const className="m-3 min-h-screen flex-col bg-blue-200 border border-blue-600 rounded-lg p-4"
+    const className="m-3 w-128  min-screen flex-col bg-blue-200 border border-blue-600 rounded-lg p-4"
 
 
 
