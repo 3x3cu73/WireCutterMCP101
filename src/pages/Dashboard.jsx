@@ -1,28 +1,40 @@
-import React, {useEffect, useState} from "react";
-import {closestCorners, DndContext} from "@dnd-kit/core";
-import {Column} from "../components/jobList.jsx";
+import React, { useEffect, useState } from "react";
+import { DndContext, closestCorners, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { Column } from "../components/jobList.jsx";
 import Navigation from "../components/Navigation.jsx";
-import {arrayMove} from "@dnd-kit/sortable";
+import { arrayMove } from "@dnd-kit/sortable";
 import Modal from "../components/modal.jsx";
 
-
-
 export const Dashboard = () => {
-    // const [data, setData] = useState([]);
-    const [jsonData,setJsonData] = useState([]);
+    const [jsonData, setJsonData] = useState([]);
+    const [selectedTask, setSelectedTask] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Configure sensors for both pointer and touch inputs
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 1 // Minimum drag distance for mouse
+            }
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 100, // 250ms delay for touch
+                tolerance: 5 // 5px movement tolerance during delay
+            }
+        })
+    );
+
     useEffect(() => {
         fetchData();
     }, []);
 
-
     const fetchData = async () => {
-        try{
-            const response=await fetch('https://vps.sumitsaw.tech/api/mcp101');
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+        try {
+            const response = await fetch('https://vps.sumitsaw.tech/api/mcp101');
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
-            const result = await response.json(); // Parse JSON data
+            const result = await response.json();
             setJsonData(result["jobs"].map((item) => ({
                 jobid: item[0],
                 id: item[1],
@@ -35,66 +47,48 @@ export const Dashboard = () => {
                 description: item[8],
                 title: item[9]
             })));
-        }
-        catch(error){
+        } catch (error) {
             console.log(error);
         }
-    }
-
-
-
-
+    };
 
     const handleDragEnd = event => {
-        const {active,over}=event
-        if (active.id===over.id) return null;
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
 
-        setJsonData(jsonData=>{
-            const oldPosition=jsonData.findIndex(task => task.id === active.id)
-            const newPosition=jsonData.findIndex(task => task.id === over.id)
-
-            return arrayMove(jsonData,oldPosition,newPosition)
-
-        })
-        console.log(jsonData)
-
-    }
-
-    const [selectedTask, setSelectedTask] = useState(jsonData[0]); // Track the currently selected task
-    const [isModalOpen, setIsModalOpen] = useState(true); // Modal visibility state
+        setJsonData(items => {
+            const oldIndex = items.findIndex(i => i.id === active.id);
+            const newIndex = items.findIndex(i => i.id === over.id);
+            return arrayMove(items, oldIndex, newIndex);
+        });
+    };
 
     const openModal = (task) => {
-        setSelectedTask(task); // Set the clicked task
+        setSelectedTask(task);
         setIsModalOpen(true);
-        console.log("Modal Triggered")
-        // Open the modal
     };
 
     const closeModal = () => {
-        setSelectedTask(null); // Clear the selected task
-        setIsModalOpen(false); // Close the modal
+        setSelectedTask(null);
+        setIsModalOpen(false);
     };
-    // console.log("hi",selectedTask);
-    // openModal(jsonData[0]);
-    console.log("selectedTask",selectedTask);
-    // console.log(isModalOpen);
-    // console.log(jsonData);
+
     return (
         <>
-            <Navigation activity={[true,false,false,false]}/>
-            {/*<Example items={data} />*/}
-        <div>Task</div>
+            <Navigation activity={[true, false, false, false]} />
+            <div>Task</div>
 
-            {/*<Modal task={jsonData[0]} onClose={closeModal}/>*/}
-        <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
-            <Column tasks={jsonData} openModal={openModal}  />
-            {/*{()=>(openModal(jsonData[0]))}*/}
-            {/*{console.log(isModalOpen,selectedTask)}*/}
-            {isModalOpen && (
-                <Modal task={selectedTask} onClose={closeModal} />
+            <DndContext
+                onDragEnd={handleDragEnd}
+                collisionDetection={closestCorners}
+                sensors={sensors} // Add sensors prop
+            >
+                <Column tasks={jsonData} openModal={openModal} />
+
+                {isModalOpen && (
+                    <Modal task={selectedTask} onClose={closeModal} />
                 )}
-        </DndContext>
-
+            </DndContext>
         </>
-    )
-}
+    );
+};

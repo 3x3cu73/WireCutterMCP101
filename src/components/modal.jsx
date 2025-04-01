@@ -3,8 +3,18 @@ import React from "react";
 const Modal = ({ task, onClose }) => {
     if (!task) return null;
 
+    // Close modal when clicking outside the modal container
+    const handleBackdropClick = (e) => {
+        if (e.target === e.currentTarget) {
+            onClose();
+        }
+    };
+
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+            onClick={handleBackdropClick} // Detect clicks on the backdrop
+        >
             {/* Modal Container */}
             <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6 animate-fade-in">
                 {/* Modal Header */}
