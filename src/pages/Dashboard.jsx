@@ -12,17 +12,13 @@ export const Dashboard = () => {
 
     // Configure sensors for both pointer and touch inputs
     const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 1 // Minimum drag distance for mouse
-            }
-        }),
+        useSensor(PointerSensor),
         useSensor(TouchSensor, {
             activationConstraint: {
                 delay: 100, // 250ms delay for touch
                 tolerance: 5 // 5px movement tolerance during delay
             }
-        })
+        }),
     );
 
     useEffect(() => {
@@ -32,7 +28,7 @@ export const Dashboard = () => {
     const fetchData = async () => {
         try {
             const response = await fetch('https://vps.sumitsaw.tech/api/mcp101');
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            if (!response.ok)  new Error(`HTTP error! Status: ${response.status}`);
 
             const result = await response.json();
             setJsonData(result["jobs"].map((item) => ({
