@@ -12,12 +12,17 @@ export const Dashboard = () => {
 
     // Configure sensors for both pointer and touch inputs
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(PointerSensor,{
+            activationConstraint: {
+                delay: 150, // Increase delay to avoid accidental drags
+                tolerance: 10, // Increase tolerance for better touch detection
+            },
+        }),
         useSensor(TouchSensor, {
             activationConstraint: {
-                delay: 100, // 250ms delay for touch
-                tolerance: 5 // 5px movement tolerance during delay
-            }
+                delay: 150, // Increase delay to avoid accidental drags
+                tolerance: 10, // Increase tolerance for better touch detection
+            },
         }),
     );
 
