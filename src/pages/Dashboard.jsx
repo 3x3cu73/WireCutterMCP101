@@ -3,6 +3,8 @@ import {closestCorners, DndContext} from "@dnd-kit/core";
 import {Column} from "../components/jobList.jsx";
 import Navigation from "../components/Navigation.jsx";
 import {arrayMove} from "@dnd-kit/sortable";
+import Modal from "../components/modal.jsx";
+
 
 
 export const Dashboard = () => {
@@ -11,6 +13,8 @@ export const Dashboard = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+
     const fetchData = async () => {
         try{
             const response=await fetch('https://vps.sumitsaw.tech/api/mcp101');
@@ -56,16 +60,41 @@ export const Dashboard = () => {
 
     }
 
-    // console.log(jsonData);
+    const [selectedTask, setSelectedTask] = useState(jsonData[0]); // Track the currently selected task
+    const [isModalOpen, setIsModalOpen] = useState(true); // Modal visibility state
 
+    const openModal = (task) => {
+        setSelectedTask(task); // Set the clicked task
+        setIsModalOpen(true);
+        console.log("Modal Triggered")
+        // Open the modal
+    };
+
+    const closeModal = () => {
+        setSelectedTask(null); // Clear the selected task
+        setIsModalOpen(false); // Close the modal
+    };
+    // console.log("hi",selectedTask);
+    // openModal(jsonData[0]);
+    console.log("selectedTask",selectedTask);
+    // console.log(isModalOpen);
+    // console.log(jsonData);
     return (
         <>
             <Navigation activity={[true,false,false,false]}/>
             {/*<Example items={data} />*/}
         <div>Task</div>
+
+            {/*<Modal task={jsonData[0]} onClose={closeModal}/>*/}
         <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
-            <Column tasks={jsonData}/>
+            <Column tasks={jsonData} openModal={openModal}  />
+            {/*{()=>(openModal(jsonData[0]))}*/}
+            {/*{console.log(isModalOpen,selectedTask)}*/}
+            {isModalOpen && (
+                <Modal task={selectedTask} onClose={closeModal} />
+                )}
         </DndContext>
+
         </>
     )
 }

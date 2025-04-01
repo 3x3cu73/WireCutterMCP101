@@ -9,7 +9,7 @@ function classNames(...classes) {
 export default function Navigation({activity}) {
     const navigation = [
         { name: 'Dashboard', href: '/', current: activity[0] },
-        { name: 'Team', href: 'Team', current:  activity[1] },
+        { name: 'Team', href: '/Team', current:  activity[1] },
         { name: 'Projects', href: '#', current:  activity[2] },
         { name: 'Calendar', href: '#', current:  activity[3]},
     ]
