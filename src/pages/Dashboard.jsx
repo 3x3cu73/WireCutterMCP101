@@ -91,9 +91,6 @@ export const Dashboard = () => {
                     <Modal task={selectedTask} onClose={closeModal} />
                 )}
             </DndContext>
-                <>hi</>
-            {/*<EditTask task={{id:"123"}} openModal={openModal} />*/}
-
 
         </>
     );
