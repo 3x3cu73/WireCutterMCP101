@@ -1,11 +1,24 @@
 import React from "react";
 
-export const EditTask=({task})=>{
+export const EditTask=({task,handDataUpdate})=>{
     // const [isModalOpen, setIsModalOpen] = useState(false);
     //
     // const openModal = () => {setIsModalOpen(true)};
     // const closeModal = () => setIsModalOpen(false);
     // openModal();
+
+    const handleChange = (event) => {
+        const {name, value} = event.target; // Extract name and value from the input
+
+        if (task[name]!==value) {
+            // task[name] = value;
+            const tmp1 = structuredClone(task); // Create a deep copy of the task object
+            tmp1[name] = value; // Update the property
+            handDataUpdate(tmp1); // Pass the updated object
+
+        }
+
+    }
     return                 <div className="mt-6 space-y-4">
         <div>
             <label className="text-sm font-medium text-gray-500">Title</label>
@@ -21,18 +34,18 @@ export const EditTask=({task})=>{
         <div>
             <label className="text-sm font-medium text-gray-500">Quantity</label>
             <br/>
-            <input type="text" defaultValue={task.a} />
+            <input name ="a" type="text" defaultValue={task.a}   onBlur={handleChange} />
             {/*<input type="text"/>*/}
         </div>
         <div>
             <label className="text-sm font-medium text-gray-500">Length</label>
             <br/>
-            <input type="text" defaultValue={task.b}/>
+            <input name ="b"  type="text" defaultValue={task.b}  onBlur={handleChange}/>
         </div>
         <div>
             <label className="text-sm font-medium text-gray-500">Stripping</label>
             <br/>
-            <input type="text" defaultValue={task.c}/>
+            <input name ="c"  type="text" defaultValue={task.c} onBlur={handleChange}/>
         </div>
     </div>
 }

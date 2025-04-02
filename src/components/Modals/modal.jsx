@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import {EditTask} from "../EditTask.jsx";
 
-const ModalEdit = ({ task, onClose }) => {
+const Modal = ({ task, onClose,children }) => {
     const [isExiting, setIsExiting] = useState(false);
 
     if (!task) return null;
@@ -45,26 +44,13 @@ const ModalEdit = ({ task, onClose }) => {
                 </div>
 
                 {/* Content */}
-                <EditTask task={task} />
 
-                {/* Footer */}
-                <div className="mt-8 flex justify-end space-x-3">
-                    <button
-                        onClick={closeWithAnimation}
-                        className="px-5 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200"
-                    >
-                        Close
+                {children}
 
-                    </button>
-                    <button
-                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
-                    >
-                        Save Changes
-                    </button>
-                </div>
+
             </div>
         </div>
     );
 };
 
-export default ModalEdit;
+export default Modal;

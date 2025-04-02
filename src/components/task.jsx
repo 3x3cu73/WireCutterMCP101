@@ -2,7 +2,6 @@ import {CSS} from "@dnd-kit/utilities";
 import {useSortable} from "@dnd-kit/sortable";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import * as faIcons from '@fortawesome/free-solid-svg-icons';
-import ModalEdit from "./Modals/modalEdit.jsx";
 
 export const Task=({id,task,openModal})=>{
     const {attributes , listeners,setNodeRef,transform ,transition } = useSortable({id});
