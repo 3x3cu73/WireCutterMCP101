@@ -6,6 +6,8 @@ import { arrayMove } from "@dnd-kit/sortable";
 import Modal from "../components/Modals/modal.jsx";
 import {EditTask} from "../components/EditTask.jsx";
 import {updateJobDetails} from "../services/updateJob.jsx";
+import {fetchMCP101Data} from "../services/fetch.jsx";
+
 
 
 export const Dashboard = () => {
@@ -30,31 +32,10 @@ export const Dashboard = () => {
     );
 
     useEffect(() => {
-        fetchData().then(() => null);
+        fetchMCP101Data().then((r) => setJsonData(r))
     }, []);
 
-    const fetchData = async () => {
-        try {
-            const response = await fetch('https://vps.sumitsaw.tech/api/mcp101');
-            if (!response.ok)  new Error(`HTTP error! Status: ${response.status}`);
 
-            const result = await response.json();
-            setJsonData(result["jobs"].map((item) => ({
-                jobid: item[0],
-                id: item[1],
-                status: item[2],
-                user: item[3],
-                a: item[4],
-                b: item[5],
-                c: item[6],
-                timestamp: item[7],
-                description: item[8],
-                title: item[9]
-            })));
-        } catch (error) {
-            console.log(error);
-        }
-    };
 
     const handleDragEnd = event => {
         const { active, over } = event;
@@ -103,21 +84,30 @@ export const Dashboard = () => {
         }
     }
 
+    const refreshData = async () => {
+
+        fetchMCP101Data().then((r) => setJsonData(r))
+
+    }
 
     return (
         <>
-            <Navigation activity={[true, false, false, false]} />
+            <Navigation activity={[true, false, false, false]}/>
+            <button type="button"
+                    onClick={refreshData} className="w-28 m-3  bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"> Default
+            </button>
+
             <DndContext
                 onDragEnd={handleDragEnd}
                 collisionDetection={closestCorners}
                 sensors={sensors} // Add sensors prop
             >
-                <Column tasks={jsonData} openModal={openModal} />
+                <Column tasks={jsonData} openModal={openModal}/>
 
                 {isModalOpen && (
-                    <Modal ModalEdit task={selectedTask} onClose={closeModal} >
+                    <Modal ModalEdit task={selectedTask} onClose={closeModal}>
                         {/*<p>working</p>*/}
-                        <EditTask task={selectedTask}  handDataUpdate={handDataUpdate} />
+                        <EditTask task={selectedTask} handDataUpdate={handDataUpdate}/>
                         {/* Footer */}
                         <div className="mt-8 flex justify-end space-x-3">
                             <button
