@@ -5,6 +5,7 @@ import Navigation from "../components/Navigation.jsx";
 import { arrayMove } from "@dnd-kit/sortable";
 import Modal from "../components/modal.jsx";
 
+
 export const Dashboard = () => {
     const [jsonData, setJsonData] = useState([]);
     const [selectedTask, setSelectedTask] = useState(null);
@@ -27,7 +28,7 @@ export const Dashboard = () => {
     );
 
     useEffect(() => {
-        fetchData();
+        fetchData().then(() => null);
     }, []);
 
     const fetchData = async () => {
@@ -90,6 +91,10 @@ export const Dashboard = () => {
                     <Modal task={selectedTask} onClose={closeModal} />
                 )}
             </DndContext>
+                <>hi</>
+            {/*<EditTask task={{id:"123"}} openModal={openModal} />*/}
+
+
         </>
     );
 };
