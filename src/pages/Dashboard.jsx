@@ -3,7 +3,7 @@ import { DndContext, closestCorners, PointerSensor, TouchSensor, useSensor, useS
 import { Column } from "../components/jobList.jsx";
 import Navigation from "../components/Navigation.jsx";
 import { arrayMove } from "@dnd-kit/sortable";
-import Modal from "../components/modal.jsx";
+import ModalEdit from "../components/Modals/modalEdit.jsx";
 
 
 export const Dashboard = () => {
@@ -15,13 +15,13 @@ export const Dashboard = () => {
     const sensors = useSensors(
         useSensor(PointerSensor,{
             activationConstraint: {
-                delay: 150, // Increase delay to avoid accidental drags
+                delay: 100, // Increase delay to avoid accidental drags
                 tolerance: 10, // Increase tolerance for better touch detection
             },
         }),
         useSensor(TouchSensor, {
             activationConstraint: {
-                delay: 150, // Increase delay to avoid accidental drags
+                delay: 100, // Increase delay to avoid accidental drags
                 tolerance: 10, // Increase tolerance for better touch detection
             },
         }),
@@ -75,11 +75,11 @@ export const Dashboard = () => {
         setIsModalOpen(false);
     };
 
+    console.log(jsonData);
+
     return (
         <>
             <Navigation activity={[true, false, false, false]} />
-            <div>Task</div>
-
             <DndContext
                 onDragEnd={handleDragEnd}
                 collisionDetection={closestCorners}
@@ -88,7 +88,7 @@ export const Dashboard = () => {
                 <Column tasks={jsonData} openModal={openModal} />
 
                 {isModalOpen && (
-                    <Modal task={selectedTask} onClose={closeModal} />
+                    <ModalEdit task={selectedTask} onClose={closeModal} />
                 )}
             </DndContext>
 

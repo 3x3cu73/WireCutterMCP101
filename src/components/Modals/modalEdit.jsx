@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import {EditTask} from "./EditTask.jsx";
+import {EditTask} from "../EditTask.jsx";
 
-const Modal = ({ task, onClose }) => {
+const ModalEdit = ({ task, onClose }) => {
     const [isExiting, setIsExiting] = useState(false);
 
     if (!task) return null;
@@ -67,4 +67,4 @@ const Modal = ({ task, onClose }) => {
     );
 };
 
-export default Modal;
+export default ModalEdit;
