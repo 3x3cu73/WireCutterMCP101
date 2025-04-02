@@ -17,13 +17,13 @@ export const Dashboard = () => {
     const sensors = useSensors(
         useSensor(PointerSensor,{
             activationConstraint: {
-                delay: 100, // Increase delay to avoid accidental drags
+                delay: 130, // Increase delay to avoid accidental drags
                 tolerance: 10, // Increase tolerance for better touch detection
             },
         }),
         useSensor(TouchSensor, {
             activationConstraint: {
-                delay: 100, // Increase delay to avoid accidental drags
+                delay: 130, // Increase delay to avoid accidental drags
                 tolerance: 10, // Increase tolerance for better touch detection
             },
         }),
