@@ -100,7 +100,7 @@ export const Dashboard = () => {
         <>
             <Navigation activity={[true, false, false, false]}/>
             <button type="button"
-                    onClick={refreshData} className="w-28 m-3  bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"> Default
+                    onClick={refreshData} className="w-28 m-3  bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"> Refresh
             </button>
 
             <DndContext
