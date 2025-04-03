@@ -33,9 +33,15 @@ export const Dashboard = () => {
 
     useEffect(() => {
         fetchMCP101Data().then((r) => setJsonData(r))
-    }, []);
 
+        // Fetch data initially and then set up an interval
+        const intervalId = setInterval(() => {
+            fetchMCP101Data().then((data) => setJsonData(data));
+        }, 2000); // 10 seconds
 
+        // Clean up the interval on component unmount
+        return () => clearInterval(intervalId);
+    }, []); // Empty dependency array ensures this runs only once on mount
 
     const handleDragEnd = event => {
         const { active, over } = event;
