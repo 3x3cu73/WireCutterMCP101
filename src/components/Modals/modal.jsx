@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 
-const Modal = ({ task, onClose,children }) => {
+const Modal = ({ title, onClose,children }) => {
     const [isExiting, setIsExiting] = useState(false);
 
-    if (!task) return null;
+    if (!title) return null;
 
     const handleBackdropClick = (e) => {
         if (e.target === e.currentTarget) {
@@ -32,7 +32,7 @@ const Modal = ({ task, onClose,children }) => {
             >
                 {/* Header */}
                 <div className="flex justify-between items-center pb-4 border-b border-gray-200">
-                    <h3 className="text-2xl font-bold text-gray-800">Task Details #{task.id}</h3>
+                    <h3 className="text-2xl font-bold text-gray-800">{title}</h3>
                     <button
                         onClick={closeWithAnimation}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"

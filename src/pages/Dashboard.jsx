@@ -7,13 +7,23 @@ import Modal from "../components/Modals/modal.jsx";
 import {EditTask} from "../components/EditTask.jsx";
 import {updateJobDetails} from "../services/updateJob.jsx";
 import {fetchMCP101Data} from "../services/fetch.jsx";
+import {CreateJob} from "../components/newJob.jsx";
 
 
 
 export const Dashboard = () => {
     const [jsonData, setJsonData] = useState([]);
     const [selectedTask, setSelectedTask] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+
+
+
+    const openNewModal = () => {
+        setIsNewModalOpen(true);
+    };
+
+
 
     // Configure sensors for both pointer and touch inputs
     const sensors = useSensors(
@@ -54,14 +64,14 @@ export const Dashboard = () => {
         });
     };
 
-    const openModal = (task) => {
+    const openEditModal = (task) => {
         setSelectedTask(task);
-        setIsModalOpen(true);
+        setIsEditModalOpen(true);
     };
 
     const closeModal = () => {
         setSelectedTask(null);
-        setIsModalOpen(false);
+        setIsEditModalOpen(false);
     };
 
     console.log(jsonData);
@@ -96,6 +106,12 @@ export const Dashboard = () => {
 
     }
 
+
+    const closeNewModal = () => {
+        // setSelectedTask(null);
+        setIsNewModalOpen(false);
+    };
+
     return (
         <>
             <Navigation activity={[true, false, false, false]}/>
@@ -103,15 +119,34 @@ export const Dashboard = () => {
                     onClick={refreshData} className="w-28 m-3  border border-white bg-green-500 hover:border hover:border-green-600 text-white font-bold py-2 px-4 rounded"> Refresh
             </button>
 
+
+
+
+
+            <button onClick={openNewModal} type="button" className="w-28 m-3  border border-white bg-blue-500 hover:border hover:border-blue-600 text-white font-bold py-2 px-4 rounded">
+                New Job
+            </button>
+            {isNewModalOpen && (
+                <Modal title="Create Job" onClose={closeNewModal}>
+
+
+                    <CreateJob closeNewModal={closeNewModal}/>
+                </Modal>
+            )
+
+            }
+
+
+
             <DndContext
                 onDragEnd={handleDragEnd}
                 collisionDetection={closestCorners}
                 sensors={sensors} // Add sensors prop
             >
-                <Column tasks={jsonData} openModal={openModal}/>
+                <Column tasks={jsonData} openModal={openEditModal}/>
 
-                {isModalOpen && (
-                    <Modal ModalEdit task={selectedTask} onClose={closeModal}>
+                {isEditModalOpen && (
+                    <Modal  title={"Edit Task #"+selectedTask.title} onClose={closeModal}>
                         {/*<p>working</p>*/}
                         <EditTask task={selectedTask} handDataUpdate={handDataUpdate}/>
                         {/* Footer */}
@@ -128,7 +163,6 @@ export const Dashboard = () => {
                     </Modal>
                 )}
             </DndContext>
-
         </>
     );
 };
