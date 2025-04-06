@@ -47,7 +47,7 @@ export const CreateJob=({closeNewModal})=>{
 
     return <div className="mt-6 space-y-4">
         <div>
-            <label className="text-sm font-medium text-gray-500">Stripping</label>
+            <label className="text-sm font-medium text-gray-500">Title</label>
             <br/>
             <input name="title" type="text" defaultValue={task.title} onBlur={handleChange}/>
         </div>
