@@ -55,7 +55,6 @@ export const Dashboard = () => {
     }, []); // Empty dependency array ensures this runs only once on mount
 
 
-    const [rankOrder, setRankOrder] = useState([]);
 
     useEffect(() => {
         console.log("jsonData updated:", jsonData);
@@ -65,8 +64,6 @@ export const Dashboard = () => {
             newRankOrder.push({ "jobRank": jsonLength - i, "jobid": jsonData[i].jobid });
         }
         console.log("Ranks:", newRankOrder);
-        setRankOrder(newRankOrder);
-
         // Optionally trigger the updateJobRank here if you want it to happen
         // automatically after reordering
         updateJobRank(newRankOrder).then(() => null);
