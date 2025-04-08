@@ -16,7 +16,7 @@ export const CreateJob=({closeNewModal})=>{
 
         const { name, value } = event.target; // Extract name and value from the input
         // Update the task state by creating a new object and merging it with the existing state
-        setTask(prevTask => ({ ...prevTask, [name]: value }));
+        setTask(prevTask => ({  [name]: value,...prevTask }));
 
     }
 

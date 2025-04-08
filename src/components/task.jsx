@@ -2,6 +2,7 @@ import {CSS} from "@dnd-kit/utilities";
 import {useSortable} from "@dnd-kit/sortable";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import * as faIcons from '@fortawesome/free-solid-svg-icons';
+import {deleteTask} from "../services/deleteTask.jsx";
 
 export const Task=({id,task,openModal})=>{
     const {attributes , listeners,setNodeRef,transform ,transition } = useSortable({id});
@@ -22,6 +23,9 @@ export const Task=({id,task,openModal})=>{
             <span className="text-green-500">Quantity: {task.a}</span>
             <span className="text-red-500">Length: {task.b}</span>
             <span className="text-orange-500">Stripping: {task.c}</span>
+
+
+
             <button onClick={() => openModal(task)}>
                 <FontAwesomeIcon
                     icon={faIcons.faPencil}
@@ -29,7 +33,13 @@ export const Task=({id,task,openModal})=>{
                     // Pass task to openModal
                     />
         </button>
-
+            <button onClick={() => deleteTask(task)}>
+                <FontAwesomeIcon
+                    icon={faIcons.faTrashCan}
+                    className="text-red-500 text-xl cursor-pointer hover:text-red-600"
+                    // Pass task to openModal
+                />
+            </button>
         </div>
 
 
