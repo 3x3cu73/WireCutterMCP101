@@ -23,7 +23,7 @@ export const CreateJob=({closeNewModal})=>{
     const handleSubmit = async(event) => {
         event.preventDefault();
 
-        console.log("handleSubmit",task);
+        // console.log("handleSubmit",task);
         const url = `https://vps.sumitsaw.tech/api/mcp101`;
 
         try {

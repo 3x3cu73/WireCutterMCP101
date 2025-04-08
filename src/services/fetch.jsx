@@ -48,7 +48,7 @@ export const fetchMCP101Data = async () => {
             title: item[9]
         }))
         // setJsonData(result);
-        console.log(result);
+        // console.log(result);
 
         return result ; // Return the data from the response
     } catch (error) {

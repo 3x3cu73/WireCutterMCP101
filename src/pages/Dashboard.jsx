@@ -8,6 +8,7 @@ import {EditTask} from "../components/EditTask.jsx";
 import {updateJobDetails} from "../services/updateJob.jsx";
 import {fetchMCP101Data} from "../services/fetch.jsx";
 import {CreateJob} from "../components/newJob.jsx";
+import {updateJobRank} from "../services/updateRank.jsx";
 
 
 
@@ -53,16 +54,38 @@ export const Dashboard = () => {
         return () => clearInterval(intervalId);
     }, []); // Empty dependency array ensures this runs only once on mount
 
+
+    const [rankOrder, setRankOrder] = useState([]);
+
+    useEffect(() => {
+        console.log("jsonData updated:", jsonData);
+        const newRankOrder = [];
+        const jsonLength = jsonData.length;
+        for (let i = 0; i < jsonLength; i++) {
+            newRankOrder.push({ "jobRank": jsonLength - i, "jobid": jsonData[i].jobid });
+        }
+        console.log("Ranks:", newRankOrder);
+        setRankOrder(newRankOrder);
+
+        // Optionally trigger the updateJobRank here if you want it to happen
+        // automatically after reordering
+        updateJobRank(newRankOrder).then(() => null);
+
+    }, [jsonData]); // Re-run when jsonData or updateJobRank changes
+
     const handleDragEnd = event => {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
-        setJsonData(items => {
-            const oldIndex = items.findIndex(i => i.id === active.id);
-            const newIndex = items.findIndex(i => i.id === over.id);
-            return arrayMove(items, oldIndex, newIndex);
+        setJsonData(prevItems => {
+            const oldIndex = prevItems.findIndex(i => i.id === active.id);
+            const newIndex = prevItems.findIndex(i => i.id === over.id);
+            return arrayMove(prevItems, oldIndex, newIndex);
         });
+        // The rankOrder and updateJobRank logic is now handled by the useEffect
     };
+
+
 
     const openEditModal = (task) => {
         setSelectedTask(task);
@@ -74,7 +97,7 @@ export const Dashboard = () => {
         setIsEditModalOpen(false);
     };
 
-    console.log(jsonData);
+    // console.log(jsonData);
 
     const handDataUpdate = async (updatedTask) => {
         // setJsonData(data);
