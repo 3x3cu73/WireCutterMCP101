@@ -69,7 +69,7 @@ function BeautifulStatusDisplay() {
             const lastUpdateTime = Math.floor(status.time);
             const difference = currentTime - lastUpdateTime;
 
-            if (difference < 5) {
+            if (difference < 10) {
                 setControllerStatus('Online');
             } else {
                 setControllerStatus('Offline');
