@@ -9,7 +9,7 @@ import { updateJobDetails } from "../services/updateJob.jsx";
 import { fetchMCP101Data } from "../services/fetch.jsx";
 import { CreateJob } from "../components/newJob.jsx";
 import { updateJobRank } from "../services/updateRank.jsx";
-import BeautifulStatusDisplay from "../../statusController.jsx";
+import BeautifulStatusDisplay from "../components/statusController.jsx";
 
 export const Dashboard = () => {
     const [jsonData, setJsonData] = useState([]);
@@ -118,8 +118,8 @@ export const Dashboard = () => {
                 </Modal>
             )}
 
-            <div className="flex flex-col md:flex-row">
-                <div className="w-full md:w-1/2 md:pr-4">
+            <div className=" p-4 relative">
+                <div className="  w-full h-full flex items-center justify-center bg-white bg-opacity-75 z-10">
                     <DndContext
                         onDragEnd={handleDragEnd}
                         collisionDetection={closestCorners}
