@@ -55,7 +55,7 @@ function BeautifulStatusDisplay() {
 
             const intervalId = setInterval(async () => {
                 await fetchStatus();
-            }, 500);
+            }, 1000);
 
             return () => clearInterval(intervalId);
         };
@@ -69,7 +69,7 @@ function BeautifulStatusDisplay() {
             const lastUpdateTime = Math.floor(status.time);
             const difference = currentTime - lastUpdateTime;
 
-            if (difference < 3) {
+            if (difference < 5) {
                 setControllerStatus('Online');
             } else {
                 setControllerStatus('Offline');
