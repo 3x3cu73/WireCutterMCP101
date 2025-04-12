@@ -110,6 +110,7 @@ export const Task = ({ id, task, openModal, deleteTask }) => { // Added deleteTa
                     title="Delete Task" // Tooltip
                 >
                     <TrashIcon className="h-4 w-4" />
+
                 </button>
             </div>
         </div>
