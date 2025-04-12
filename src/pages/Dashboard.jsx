@@ -43,6 +43,9 @@ export const Dashboard = () => {
                 tolerance: 5,   // Slightly reduced tolerance
             },
         }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter:sortableKeyboardCoordinates
+        })
     );
 
     useEffect(() => {
