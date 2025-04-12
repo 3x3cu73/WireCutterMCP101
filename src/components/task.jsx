@@ -11,11 +11,12 @@ export const Task = ({ id, task, openModal }) => {
     const style = {
         transition,
         transform: CSS.Transform.toString(transform),
+        touchAction: 'none'
     };
 
-    const className = " m-3  bg-white border border-blue-300 rounded-lg p-2";
+    const className = " m-1  bg-white border border-blue-300 rounded-lg p-2";
 
-    return <div ref={setNodeRef} {...attributes} {...listeners} className={className} style={style}>
+    return <div ref={setNodeRef} {...attributes} {...listeners} className={className} style={style} >
         <span className="text-blue-400 font-bold text-lg">{id}.   </span>
         <span className="text-blue-400 font-bold text-lg">{task.title}</span>
         <br />

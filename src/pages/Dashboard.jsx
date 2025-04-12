@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { DndContext, closestCorners, PointerSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import {
+    DndContext,
+    closestCorners,
+    PointerSensor,
+    TouchSensor,
+    useSensor,
+    useSensors,
+    KeyboardSensor
+} from "@dnd-kit/core";
 import { Column } from "../components/jobList.jsx";
 import Navigation from "../components/Navigation.jsx";
-import { arrayMove } from "@dnd-kit/sortable";
+import {arrayMove, sortableKeyboardCoordinates} from "@dnd-kit/sortable";
 import Modal from "../components/Modals/modal.jsx";
 import { EditTask } from "../components/EditTask.jsx";
 import { updateJobDetails } from "../services/updateJob.jsx";
@@ -21,21 +29,21 @@ export const Dashboard = () => {
         setIsNewModalOpen(true);
     };
 
-    // // Configure sensors for both pointer and touch inputs
-    // const sensors = useSensors(
-    //     useSensor(PointerSensor, {
-    //         activationConstraint: {
-    //             delay: 100, // Slightly reduced delay
-    //             tolerance: 5,   // Slightly reduced tolerance
-    //         },
-    //     }),
-    //     useSensor(TouchSensor, {
-    //         activationConstraint: {
-    //             delay: 100, // Slightly reduced delay
-    //             tolerance: 5,   // Slightly reduced tolerance
-    //         },
-    //     }),
-    // );
+    // Configure sensors for both pointer and touch inputs
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                delay: 100, // Slightly reduced delay
+                tolerance: 5,   // Slightly reduced tolerance
+            },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 100, // Slightly reduced delay
+                tolerance: 5,   // Slightly reduced tolerance
+            },
+        }),
+    );
 
     useEffect(() => {
         fetchMCP101Data().then((r) => setJsonData(r));
@@ -123,7 +131,7 @@ export const Dashboard = () => {
                     <DndContext
                         onDragEnd={handleDragEnd}
                         collisionDetection={closestCorners}
-                        // sensors={sensors}
+                        sensors={sensors}
                     >
                         <Column tasks={jsonData} openModal={openEditModal}/>
 
