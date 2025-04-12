@@ -116,7 +116,7 @@ function BeautifulStatusDisplay() {
             setControllerStatus(isOnline ? 'Online' : 'Offline');
         }
         // If no error, not loading initially, but still no status.time -> Treat as Offline/Unknown
-        else {sec change
+        else {
             setControllerStatus('Offline');
         }
 
