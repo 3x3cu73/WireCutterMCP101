@@ -112,11 +112,11 @@ function BeautifulStatusDisplay() {
         // If no error and we have status data with time
         if (status?.time) {
             const timeDiff = Math.floor(Date.now() / 1000) - Math.floor(status.time);
-            const isOnline = timeDiff < 10; // Check if device is considered online
+            const isOnline = timeDiff < 5; // Check if device is considered online
             setControllerStatus(isOnline ? 'Online' : 'Offline');
         }
         // If no error, not loading initially, but still no status.time -> Treat as Offline/Unknown
-        else {
+        else {sec change
             setControllerStatus('Offline');
         }
 
