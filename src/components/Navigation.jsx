@@ -15,15 +15,11 @@ export default function Navigation({ activity }) {
     ]
 
     return (
-        // ---- MODIFIED LINE ----
-        <Disclosure as="nav" className="sticky top-0 z-50 bg-blue-50/95 backdrop-blur-sm border-b border-blue-500 m-3 border-4 rounded-2xl">
-            {/*
-           Notes on className changes:
-           - Added `sticky top-0 z-50`: Makes the navbar stick to the top and stay above other content.
-           - Changed `bg-blue-50` to `bg-blue-50/95`: Makes the background slightly transparent (95% opacity). Adjust the '/95' value (e.g., /90, /80) for more/less transparency.
-           - Added `backdrop-blur-sm`: Applies a small blur effect to whatever is behind the navbar. You can use `backdrop-blur-md` or `backdrop-blur-lg` for more blur.
-           - Kept existing styles: `border-b border-blue-500 m-3 border-4 rounded-2xl`
-        */}
+        <>
+        <div className="sticky top-0 z-50 m-2  ">
+
+        <Disclosure as="nav" className=" border-b-2 border-blue-700 m-2 border-4 rounded-xl  bg-blue/40 backdrop-blur-lg  rounded-bl-3xl rounded-br-3xl">
+
             <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
                 <div className="relative flex h-16 items-center justify-between">
                     {/* ... rest of the mobile menu button ... */}
@@ -137,6 +133,13 @@ export default function Navigation({ activity }) {
                     ))}
                 </div>
             </DisclosurePanel>
+
         </Disclosure>
+            {/*<div className=" bg-blue/40 backdrop-blur-lg  rounded-bl-3xl rounded-br-3xl">*/}
+
+            {/*</div>*/}
+        </div>
+
+            </>
     )
 }
