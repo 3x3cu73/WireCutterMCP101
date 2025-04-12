@@ -147,10 +147,6 @@ function BeautifulStatusDisplay() {
                     Last API Update: {formattedTime} (IST)
                 </div>
 
-                <div className="bg-gray-100 py-2 px-4 text-right text-xs italic text-gray-500">Vercel Analytics : :<Analytics />
-                </div>
-
-
             </div>
         </div>
     );

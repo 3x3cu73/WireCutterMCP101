@@ -18,6 +18,7 @@ import { fetchMCP101Data } from "../services/fetch.jsx";
 import { CreateJob } from "../components/newJob.jsx";
 import { updateJobRank } from "../services/updateRank.jsx";
 import BeautifulStatusDisplay from "../components/statusController.jsx";
+import {Analytics} from "@vercel/analytics/dist/react/index.js";
 
 export const Dashboard = () => {
     const [jsonData, setJsonData] = useState([]);
@@ -114,6 +115,7 @@ export const Dashboard = () => {
 
     return (
         <>
+            <Analytics />
             <Navigation activity={[true, false, false, false]}/>
             <BeautifulStatusDisplay />
             <button type="button"
