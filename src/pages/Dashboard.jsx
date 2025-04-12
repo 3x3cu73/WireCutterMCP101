@@ -21,21 +21,21 @@ export const Dashboard = () => {
         setIsNewModalOpen(true);
     };
 
-    // Configure sensors for both pointer and touch inputs
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                delay: 100, // Slightly reduced delay
-                tolerance: 5,   // Slightly reduced tolerance
-            },
-        }),
-        useSensor(TouchSensor, {
-            activationConstraint: {
-                delay: 100, // Slightly reduced delay
-                tolerance: 5,   // Slightly reduced tolerance
-            },
-        }),
-    );
+    // // Configure sensors for both pointer and touch inputs
+    // const sensors = useSensors(
+    //     useSensor(PointerSensor, {
+    //         activationConstraint: {
+    //             delay: 100, // Slightly reduced delay
+    //             tolerance: 5,   // Slightly reduced tolerance
+    //         },
+    //     }),
+    //     useSensor(TouchSensor, {
+    //         activationConstraint: {
+    //             delay: 100, // Slightly reduced delay
+    //             tolerance: 5,   // Slightly reduced tolerance
+    //         },
+    //     }),
+    // );
 
     useEffect(() => {
         fetchMCP101Data().then((r) => setJsonData(r));
@@ -123,7 +123,7 @@ export const Dashboard = () => {
                     <DndContext
                         onDragEnd={handleDragEnd}
                         collisionDetection={closestCorners}
-                        sensors={sensors}
+                        // sensors={sensors}
                     >
                         <Column tasks={jsonData} openModal={openEditModal}/>
 
