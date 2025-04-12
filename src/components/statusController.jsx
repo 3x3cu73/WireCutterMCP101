@@ -1,6 +1,7 @@
 // src/components/BeautifulStatusDisplay.jsx
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {Analytics} from "@vercel/analytics/react";
 
 const expandVariants = {
     collapsed: { height: 0, opacity: 0, transition: { duration: 0.2, ease: 'easeInOut' } },
@@ -145,6 +146,11 @@ function BeautifulStatusDisplay() {
                 <div className="bg-gray-100 py-2 px-4 text-right text-xs italic text-gray-500">
                     Last API Update: {formattedTime} (IST)
                 </div>
+
+                <div className="bg-gray-100 py-2 px-4 text-right text-xs italic text-gray-500">Vercel Analytics : :<Analytics />
+                </div>
+
+
             </div>
         </div>
     );
