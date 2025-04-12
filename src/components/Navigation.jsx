@@ -15,12 +15,18 @@ export default function Navigation({ activity }) {
     ]
 
     return (
-        <Disclosure
-            as="nav"
-            className="bg-blue-50 border-b border-blue-500 m-3 border-4 rounded-2xl sticky top-0 z-50"
-        >
+        // ---- MODIFIED LINE ----
+        <Disclosure as="nav" className="sticky top-0 z-50 bg-blue-50/95 backdrop-blur-sm border-b border-blue-500 m-3 border-4 rounded-2xl">
+            {/*
+           Notes on className changes:
+           - Added `sticky top-0 z-50`: Makes the navbar stick to the top and stay above other content.
+           - Changed `bg-blue-50` to `bg-blue-50/95`: Makes the background slightly transparent (95% opacity). Adjust the '/95' value (e.g., /90, /80) for more/less transparency.
+           - Added `backdrop-blur-sm`: Applies a small blur effect to whatever is behind the navbar. You can use `backdrop-blur-md` or `backdrop-blur-lg` for more blur.
+           - Kept existing styles: `border-b border-blue-500 m-3 border-4 rounded-2xl`
+        */}
             <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
                 <div className="relative flex h-16 items-center justify-between">
+                    {/* ... rest of the mobile menu button ... */}
                     <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
                         <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-blue-500 hover:bg-blue-100 hover:text-blue-600 focus:ring-2 focus:ring-blue-600 focus:outline-none">
                             <span className="sr-only">Open main menu</span>
@@ -28,11 +34,13 @@ export default function Navigation({ activity }) {
                             <XMarkIcon aria-hidden="true" className="hidden size-6 group-data-open:block" />
                         </DisclosureButton>
                     </div>
+
+                    {/* ... rest of the logo and desktop navigation ... */}
                     <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                         <div className="flex shrink-0 items-center">
                             <img
                                 alt="Sumit Kumar Saw"
-                                src="/iitd.png"
+                                src="/iitd.png" // Make sure this path is correct relative to your public folder
                                 className="h-8 w-auto"
                             />
                         </div>
@@ -45,8 +53,8 @@ export default function Navigation({ activity }) {
                                         aria-current={item.current ? 'page' : undefined}
                                         className={classNames(
                                             item.current
-                                                ? 'bg-blue-300 text-blue-700'
-                                                : 'text-blue-500 hover:bg-blue-100 hover:text-blue-600',
+                                                ? 'bg-blue-300 text-blue-700' // Current item style
+                                                : 'text-blue-600 hover:bg-blue-100 hover:text-blue-700', // Non-current item style (adjusted for contrast)
                                             'rounded-md px-3 py-2 text-sm font-medium',
                                         )}
                                     >
@@ -56,15 +64,19 @@ export default function Navigation({ activity }) {
                             </div>
                         </div>
                     </div>
+
+                    {/* ... rest of the notification bell and profile dropdown ... */}
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
                         <button
                             type="button"
-                            className="relative rounded-full bg-white p-1 text-blue-500 hover:text-blue-600 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 focus:outline-none"
+                            // Adjusted button style for better visibility on semi-transparent bg
+                            className="relative rounded-full bg-white/50 p-1 text-blue-500 hover:text-blue-700 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 focus:outline-none"
                         >
                             <span className="sr-only">View notifications</span>
                             <BellIcon aria-hidden="true" className="size-6" />
                         </button>
 
+                        {/* Profile dropdown */}
                         <Menu as="div" className="relative ml-3">
                             <div>
                                 <MenuButton className="relative flex rounded-full bg-white text-sm focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 focus:outline-none">
@@ -76,30 +88,23 @@ export default function Navigation({ activity }) {
                                     />
                                 </MenuButton>
                             </div>
+                            {/* Adjusted MenuItems background for better contrast */}
                             <MenuItems
-                                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 ring-1 shadow-lg ring-black/5 focus:outline-none"
+                                transition // Added transition for smoother appearance
+                                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in" // Tailwind UI transition classes
                             >
                                 <MenuItem>
-                                    <a
-                                        href="#"
-                                        className="block px-4 py-2 text-sm text-blue-500 hover:bg-blue-100 hover:text-blue-600"
-                                    >
+                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100">
                                         Your Profile
                                     </a>
                                 </MenuItem>
                                 <MenuItem>
-                                    <a
-                                        href="#"
-                                        className="block px-4 py-2 text-sm text-blue-500 hover:bg-blue-100 hover:text-blue-600"
-                                    >
+                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100">
                                         Settings
                                     </a>
                                 </MenuItem>
                                 <MenuItem>
-                                    <a
-                                        href="#"
-                                        className="block px-4 py-2 text-sm text-blue-500 hover:bg-blue-100 hover:text-blue-600"
-                                    >
+                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100">
                                         Sign out
                                     </a>
                                 </MenuItem>
@@ -109,19 +114,22 @@ export default function Navigation({ activity }) {
                 </div>
             </div>
 
-            <DisclosurePanel className="sm:hidden">
+            {/* Mobile Menu Panel - Also apply background opacity and blur */}
+            {/* ---- MODIFIED LINE ---- */}
+            <DisclosurePanel className="sm:hidden bg-blue-50/95 backdrop-blur-sm rounded-b-lg -mt-1 pt-1">
+                {/* Added matching bg opacity/blur, rounded bottom corners, negative margin + padding top to align better */}
                 <div className="space-y-1 px-2 pt-2 pb-3">
                     {navigation.map((item) => (
                         <DisclosureButton
                             key={item.name}
-                            as="a"
-                            href={item.href}
+                            as={Link} // Use Link for routing here too
+                            to={item.href} // Use 'to' instead of 'href' for Link
                             aria-current={item.current ? 'page' : undefined}
                             className={classNames(
                                 item.current
-                                    ? 'bg-blue-200 text-blue700'
-                                    : 'text-blue500 hover:bgblue100 hover:textblue600',
-                                'block rounded-md px3 py2 textbase fontmedium',
+                                    ? 'bg-blue-200 text-blue-700'
+                                    : 'text-blue-600 hover:bg-blue-100 hover:text-blue-700', // Adjusted non-current style
+                                'block rounded-md px-3 py-2 text-base font-medium',
                             )}
                         >
                             {item.name}
