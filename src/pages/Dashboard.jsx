@@ -41,7 +41,7 @@ export const Dashboard = () => {
         useSensor(TouchSensor, {
             activationConstraint: {
                 delay: 100, // Slightly reduced delay
-                tolerance: 5,   // Slightly reduced tolerance
+                // tolerance: 5,   // Slightly reduced tolerance
             },
         }),
         useSensor(KeyboardSensor, {
