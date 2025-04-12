@@ -3,12 +3,14 @@ import React from 'react';
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
 // Import Heroicons (adjust path based on solid/outline preference)
-import { PencilSquareIcon, TrashIcon, Bars3Icon } from '@heroicons/react/24/outline'; // Or /20/solid
+import { PencilSquareIcon, TrashIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import {deleteTask} from "../services/deleteTask.jsx";
+// Or /20/solid
 // Optional: Icons for details
 // import { CubeIcon, ArrowsRightLeftIcon, ScissorsIcon } from '@heroicons/react/20/solid';
 
 // Define the Task component
-export const Task = ({ id, task, openModal, deleteTask }) => { // Added deleteTask prop
+export const Task = ({ id, task, openModal}) => { // Added deleteTask prop
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
     // Style for drag-and-drop transformations
@@ -41,7 +43,7 @@ export const Task = ({ id, task, openModal, deleteTask }) => { // Added deleteTa
         // Add a confirmation dialog here in a real application before deleting!
         // Example: if (window.confirm(`Are you sure you want to delete "${task.title}"?`)) { ... }
         console.log(`Requesting delete for task ID: ${id}`); // Log the ID being deleted
-        deleteTask(id); // Call the passed delete function with the task's unique ID
+        deleteTask(task).then(r =>console.log(r) ); // Call the passed delete function with the task's unique ID
     };
 
     // Handle edit click
