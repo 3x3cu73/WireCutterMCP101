@@ -170,7 +170,7 @@ export const Dashboard = () => {
             i === index ? { ...task, ...updatedTaskData } : task
         );
         setJsonData(updatedArray);
-        closeEditModal();
+        // closeEditModal();
 
         // API Call
         try {

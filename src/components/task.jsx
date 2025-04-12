@@ -62,6 +62,7 @@ export const Task = ({ id, task, openModal }) => {
                 title="Confirm Deletion"
                 confirmText="Delete Task"
                 confirmButtonStyle="danger"
+                confirmActioningText="Deleting..."
             >
                 <p>
                     Are you sure you want to delete the task:
