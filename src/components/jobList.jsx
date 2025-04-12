@@ -7,7 +7,7 @@ export const Column=({tasks,openModal})=>{
     // Kept `flex flex-col` to ensure tasks stack vertically within the column.
     // Kept padding `p-4` for internal spacing within the column.
     // Kept margin `m-3` for spacing between columns (adjust if needed based on parent gap).
-    const className="m-1 min-h-32 flex flex-col bg-blue-200 border border-blue-600 rounded-lg p-4"
+    const className="overflow-y-auto m-1 min-h-32 flex flex-col bg-blue-200 border border-blue-600 rounded-lg p-4"
 
     return (
         <>
