@@ -115,47 +115,119 @@ export const Dashboard = () => {
 
     return (
         <>
-            <Analytics />
+            {/* Analytics might belong inside the main content or outside, depending on your needs */}
+            {/* <Analytics /> */}
+
+            {/* Assume Navigation might be a fixed/sticky header */}
             <Navigation activity={[true, false, false, false]}/>
             <BeautifulStatusDisplay />
-            <button type="button"
-                    onClick={refreshData} className="w-28 m-3  border border-white bg-green-500 hover:border hover:border-green-600 text-white font-bold py-2 px-4 rounded"> Refresh
-            </button>
 
-            <button onClick={openNewModal} type="button" className="w-28 m-3  border border-white bg-blue-500 hover:border hover:border-blue-600 text-white font-bold py-2 px-4 rounded">
-                New Job
-            </button>
-            {isNewModalOpen && (
-                <Modal title="Create Job" onClose={closeNewModal}>
-                    <CreateJob closeNewModal={closeNewModal}/>
-                </Modal>
-            )}
 
-            <div className="  relative">
-                <div className="  w-full h-full flex items-center justify-center bg-white bg-opacity-75 z-10">
-                    <DndContext
-                        onDragEnd={handleDragEnd}
-                        collisionDetection={closestCorners}
-                        sensors={sensors}
-                    >
-                        <Column tasks={jsonData} openModal={openEditModal}/>
+            {/* ===== Main Content Area Wrapper ===== */}
+            {/* Add 'pt-16' (or your navbar's height) IF <Navigation> is fixed/sticky */}
+            {/* Remove 'pt-16' if <Navigation> is part of the normal document flow */}
+            <main className="pt-16"> {/* Adjust or remove pt-16 based on Navigation behavior */}
 
-                        {isEditModalOpen && (
-                            <Modal title={`Edit Task #${selectedTask.title}`} onClose={closeModal}>
-                                <EditTask task={selectedTask} handDataUpdate={handDataUpdate}/>
-                                <div className="mt-8 flex justify-end space-x-3">
-                                    <button
-                                        onClick={closeModal}
-                                        className="px-5 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200"
-                                    >
-                                        Close
-                                    </button>
-                                </div>
-                            </Modal>
-                        )}
-                    </DndContext>
-                </div>
-            </div>
+                {/* Container to constrain width and center content */}
+                {/* max-w-7xl limits width, mx-auto centers it, px-* adds side padding */}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"> {/* Adjust max-w-* as needed */}
+
+                    {/* Place components that belong in the main centered content area here */}
+                    <Analytics /> {/* Moved inside the constrained area */}
+
+                    {/* Container for buttons for better spacing/layout */}
+                    <div className="mb-6 flex flex-wrap items-center gap-3"> {/* Added mb-6 for space below buttons */}
+                        <button
+                            type="button"
+                            onClick={refreshData}
+                            className="border border-transparent bg-green-500 hover:bg-green-600 hover:border-green-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200">
+                            Refresh
+                        </button>
+
+                        <button
+                            onClick={openNewModal}
+                            type="button"
+                            className="border border-transparent bg-blue-500 hover:bg-blue-600 hover:border-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200">
+                            New Job
+                        </button>
+                    </div>
+
+                    {/* New Job Modal */}
+                    {isNewModalOpen && (
+                        <Modal title="Create Job" onClose={closeNewModal}>
+                            <CreateJob closeNewModal={closeNewModal}/>
+                        </Modal>
+                    )}
+
+                    {/* DnD Section Container */}
+                    {/* Removed h-full, flex items-center justify-center as the parent (.max-w-7xl) now controls centering/padding */}
+                    <div className="w-full bg-white bg-opacity-75 z-10 p-4 rounded-lg shadow"> {/* Optional: added rounding/shadow */}
+
+                        {/* Grid container - It will now respect the parent's max-width */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            {/* --- First DND Region --- */}
+                            {/* Added min-w-0 to allow shrinking below content size if needed */}
+                            <div className="min-w-0">
+                                <DndContext
+                                    onDragEnd={handleDragEnd} // Remember: Separate handlers/state if independent
+                                    collisionDetection={closestCorners}
+                                    sensors={sensors}
+                                >
+                                    <Column tasks={jsonData} openModal={openEditModal}/>
+
+                                    {/* Edit Task Modal 1 (Needs independent state if applicable) */}
+                                    {isEditModalOpen && (
+                                        <Modal title={`Edit Task #${selectedTask?.title}`} onClose={closeModal}>
+                                            <EditTask task={selectedTask} handDataUpdate={handDataUpdate}/>
+                                            <div className="mt-8 flex justify-end space-x-3">
+                                                <button
+                                                    onClick={closeModal}
+                                                    className="px-5 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                                >
+                                                    Close
+                                                </button>
+                                            </div>
+                                        </Modal>
+                                    )}
+                                </DndContext>
+                            </div>
+
+                            {/* --- Second DND Region --- */}
+                            {/* Added min-w-0 */}
+                            <div className="min-w-0">
+                                <DndContext
+                                    onDragEnd={handleDragEnd} // Needs handleDragEnd2 if independent
+                                    collisionDetection={closestCorners}
+                                    sensors={sensors}
+                                >
+                                    {/* Needs jsonData2, openEditModal2 if independent */}
+                                    <Column tasks={jsonData} openModal={openEditModal}/>
+
+                                    {/* Edit Task Modal 2 (Needs independent state: isEditModalOpen2, selectedTask2 etc.) */}
+                                    {isEditModalOpen && (
+                                        <Modal title={`Edit Task #${selectedTask?.title}`} onClose={closeModal}>
+                                            <EditTask task={selectedTask} handDataUpdate={handDataUpdate}/>
+                                            <div className="mt-8 flex justify-end space-x-3">
+                                                <button
+                                                    onClick={closeModal} // Needs closeModal2 if independent
+                                                    className="px-5 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                                >
+                                                    Close
+                                                </button>
+                                            </div>
+                                        </Modal>
+                                    )}
+                                </DndContext>
+                            </div>
+
+                        </div> {/* End Grid */}
+                    </div> {/* End DnD Section Container */}
+
+                </div> {/* ===== End Constrained Container ===== */}
+            </main> {/* ===== End Main Content Area ===== */}
+
+            {/* Removed the outer <div className="relative"> unless specifically needed for absolute positioning of children relative to the entire page */}
         </>
     );
 };

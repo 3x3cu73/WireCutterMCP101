@@ -91,7 +91,7 @@ function BeautifulStatusDisplay() {
     const ipAddress = status?.data?.find(item => item.label === 'IP Address')?.info;
 
     return (
-        <div className="bg-gray-100 p-4 relative">
+        <div className="bg-gray-100 p-4 relative  border-gray-200 rounded-t-lg">
             {showOverlay && (
                 <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white bg-opacity-75 z-10">
                     {loading && <div className="text-center text-gray-500 italic">Loading device status...</div>}
