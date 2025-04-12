@@ -18,7 +18,7 @@ import { fetchMCP101Data } from "../services/fetch.jsx";
 import { CreateJob } from "../components/newJob.jsx";
 import { updateJobRank } from "../services/updateRank.jsx";
 import BeautifulStatusDisplay from "../components/statusController.jsx";
-import {Analytics} from "@vercel/analytics/dist/react/index.js";
+import {Analytics} from "@vercel/analytics/react";
 
 export const Dashboard = () => {
     const [jsonData, setJsonData] = useState([]);
