@@ -20,9 +20,9 @@ export const Task = ({ id, task, openModal }) => {
         <span className="text-blue-400 font-bold text-lg">{task.title}</span>
         <br />
         <div className="flex justify-between items-center">
-            <span className="text-green-500">Quantity: {task.a}</span>
-            <span className="text-red-500">Length: {task.b}</span>
-            <span className="text-orange-500">Stripping: {task.c}</span>
+            <span className="text-green-500"> Quantity:  {task.a} </span>
+            <span className="text-red-500"> Length:  {task.b} </span>
+            <span className="text-orange-500"> Stripping:  {task.c} </span>
 
             <button onClick={() => openModal(task)}>
                 <FontAwesomeIcon
