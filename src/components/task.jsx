@@ -14,7 +14,7 @@ export const Task = ({ id, task, openModal }) => {
         touchAction: 'none'
     };
 
-    const className = " m-1  bg-white border border-blue-300 rounded-lg p-2";
+    const className = " m-1 bg-white border border-blue-300 rounded-lg p-2";
 
     return <div ref={setNodeRef} {...attributes} {...listeners} className={className} style={style} >
         <span className="text-blue-400 font-bold text-lg">{id}.   </span>
@@ -24,18 +24,20 @@ export const Task = ({ id, task, openModal }) => {
             <span className="text-green-500"> Quantity:  {task.a} </span>
             <span className="text-red-500"> Length:  {task.b} </span>
             <span className="text-orange-500"> Stripping:  {task.c} </span>
-
-            <button onClick={() => openModal(task)}>
+                &nbsp;
+             <button onClick={() => openModal(task)}>
                 <FontAwesomeIcon
                     icon={faIcons.faPencil}
                     className="text-blue-500 text-xl cursor-pointer hover:text-blue-600"
                 />
             </button>
-            <button onClick={() => deleteTask(task)}>
+            <p>&nbsp;&nbsp;&nbsp;</p>
+             <button onClick={() => deleteTask(task)}>
                 <FontAwesomeIcon
                     icon={faIcons.faTrashCan}
                     className="text-red-500 text-xl cursor-pointer hover:text-red-600"
                 />
+
             </button>
         </div>
     </div>;

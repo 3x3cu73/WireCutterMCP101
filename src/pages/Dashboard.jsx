@@ -129,7 +129,7 @@ export const Dashboard = () => {
                 </Modal>
             )}
 
-            <div className=" p-4 relative">
+            <div className="  relative">
                 <div className="  w-full h-full flex items-center justify-center bg-white bg-opacity-75 z-10">
                     <DndContext
                         onDragEnd={handleDragEnd}
