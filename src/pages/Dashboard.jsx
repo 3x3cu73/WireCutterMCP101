@@ -312,21 +312,22 @@ export const Dashboard = () => {
                         {/* Main Content Grid */}
                         <div className="w-full bg-white/70 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-gray-200/80">
                             {jsonData.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                                     {/* Column 1 */}
                                     <div className="min-w-0">
-                                        <h2 className="text-xl font-semibold mb-4 text-gray-800">Job Queue 1</h2>
+                                        <h2 className="text-xl font-semibold mb-4 text-gray-800">Pending Jobs</h2>
+                                        <h4 className="text-sm font-semibold mb-4 text-gray-800">You can Drag and Drop to Rearrange Priority Order (Hover Over  Task to see options)</h4>
                                         <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCorners} sensors={sensors}>
                                             <Column tasks={jsonData} openModal={openEditModal} deleteTask={handleDeleteTask} />
                                         </DndContext>
                                     </div>
                                     {/* Column 2 */}
-                                    <div className="min-w-0">
-                                        <h2 className="text-xl font-semibold mb-4 text-gray-800">Job Queue 2</h2>
-                                        <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCorners} sensors={sensors}>
-                                            <Column tasks={jsonData} openModal={openEditModal} deleteTask={handleDeleteTask} />
-                                        </DndContext>
-                                    </div>
+                                    {/*<div className="min-w-0">*/}
+                                    {/*    <h2 className="text-xl font-semibold mb-4 text-gray-800">Job Queue 2</h2>*/}
+                                    {/*    <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCorners} sensors={sensors}>*/}
+                                    {/*        <Column tasks={jsonData} openModal={openEditModal} deleteTask={handleDeleteTask} />*/}
+                                    {/*    </DndContext>*/}
+                                    {/*</div>*/}
                                 </div>
                             ) : (
                                 <div className="text-center py-10 text-gray-500">

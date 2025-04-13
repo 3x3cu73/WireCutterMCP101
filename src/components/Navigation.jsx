@@ -35,6 +35,7 @@ export default function Navigation({ activity = [true, false, false, false] }) {
                         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                             <div className="relative flex h-16 items-center justify-between">
                                 {/* Mobile menu button */}
+
                                 <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
                                     <DisclosureButton className="group relative inline-flex items-center justify-center rounded-lg p-2 text-gray-500 hover:bg-gray-100/50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
                                         <span className="sr-only">Open main menu</span>
@@ -47,6 +48,7 @@ export default function Navigation({ activity = [true, false, false, false] }) {
                                 <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                                     {/* Logo */}
                                     <div className="flex shrink-0 items-center">
+                                         {/* Updated Logo Text */}
                                         <img
                                             alt="Company Logo" // More descriptive alt text
                                             src="/iitd.png" // Ensure this path is correct
@@ -54,6 +56,7 @@ export default function Navigation({ activity = [true, false, false, false] }) {
                                         />
                                         {/* Optional: Text Logo for smaller screens if image hidden */}
                                         {/* <span className="ml-2 text-lg font-semibold text-gray-800 lg:hidden">Logo</span> */}
+                                        &nbsp;&nbsp;&nbsp;&nbsp;<h2 className="font-semibold align-left">Automatic Wire Cutter </h2>&nbsp;
                                     </div>
                                     {/* Desktop Links */}
                                     <div className="hidden sm:ml-6 sm:block">

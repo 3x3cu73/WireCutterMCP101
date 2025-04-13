@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 // Optional: Add an icon library like react-icons if you want input icons
 // import { FiMail, FiLock } from 'react-icons/fi';
 
-export default function Login() {
+export default function Login({setToken}) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
@@ -15,6 +15,27 @@ export default function Login() {
         // Example: You would typically call an API here
         // loginUser({ email, password });
     };
+
+
+    const handleLogin=async e=>{
+        e.preventDefault();
+        const response = await fetch('https://vps.sumitsaw.tech/api/mcp101/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+        console.log(data);
+        if (response.ok) {
+            setToken(data.token); // Assuming the token is in data.token
+            console.log("Login successful");
+        } else {
+            console.error("Login failed:", data.message);
+        }
+    }
 
     return (
         // Main container: Full screen, centered content, gradient background
