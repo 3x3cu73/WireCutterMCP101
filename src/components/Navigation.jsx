@@ -56,7 +56,7 @@ export default function Navigation({ activity = [true, false, false, false] }) {
                                         />
                                         {/* Optional: Text Logo for smaller screens if image hidden */}
                                         {/* <span className="ml-2 text-lg font-semibold text-gray-800 lg:hidden">Logo</span> */}
-                                        &nbsp;<h2 className="font-semibold align-left">Automatic Wire Cutter </h2>&nbsp;
+                                        &nbsp;<h2 className="font-semibold align-left mx-1">Automatic Wire Cutter </h2>&nbsp;
                                     </div>
                                     {/* Desktop Links */}
                                     <div className="hidden sm:ml-6 sm:block">
@@ -82,14 +82,7 @@ export default function Navigation({ activity = [true, false, false, false] }) {
 
                                 {/* Right side icons: Notification and Profile */}
                                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-                                    <button
-                                        type="button"
-                                        // --- MODIFIED: Button Style ---
-                                        className="relative rounded-full bg-white/40 p-1.5 text-gray-500 hover:text-gray-700 hover:bg-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-100/50 transition-colors"
-                                    >
-                                        <span className="sr-only">View notifications</span>
-                                        <BellIcon aria-hidden="true" className="size-6" />
-                                    </button>
+
 
                                     {/* Profile dropdown */}
                                     <Menu as="div" className="relative ml-3">
