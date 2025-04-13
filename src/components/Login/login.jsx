@@ -65,7 +65,7 @@ export default function Login({setToken,setLoggedIn}) {
                             <FiMail />
                         </span> */}
                         <input
-                            type="email"
+                            type="text"
                             id="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
