@@ -10,11 +10,6 @@ function setToken(token) {
     sessionStorage.setItem("token", JSON.stringify(token));
 }
 
-function getToken() {
-    const tokenString = sessionStorage.getItem('token');
-    const userToken = JSON.parse(tokenString);
-    return userToken?.token;
-}
 
 function setLoggedInStorage(isLoggedIn) {
     sessionStorage.setItem("loggedIn", JSON.stringify(isLoggedIn));
