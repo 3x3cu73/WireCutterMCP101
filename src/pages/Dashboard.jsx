@@ -18,7 +18,7 @@ import { Column } from "../components/jobList.jsx"; // Assuming jobList.jsx is s
 import Modal from "../components/Modals/modal.jsx";
 import { EditTask } from "../components/EditTask.jsx";
 import { CreateJob } from "../components/newJob.jsx";
-import BeautifulStatusDisplay from "../components/statusController.jsx";
+import BeautifulStatusDisplay from "../components/deviceStatus.jsx";
 import Navigation from "../components/Navigation.jsx";
 
 // Import Services

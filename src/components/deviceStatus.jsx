@@ -92,7 +92,7 @@ function BeautifulStatusDisplay() {
             await fetchStatus(true); // Pass true for initial fetch
             intervalId = setInterval(() => fetchStatus(false), 500); // Pass false for interval
         };
-        fetchDataAndSetInterval();
+        fetchDataAndSetInterval().then(r => console.log(r));
         return () => { if (intervalId) clearInterval(intervalId); }; // Cleanup
     }, []); // Runs once on mount
 
@@ -132,9 +132,11 @@ function BeautifulStatusDisplay() {
     const formattedTime = status?.time
         ? new Date(status.time * 1000).toLocaleString('en-IN', {
             timeZone: 'Asia/Kolkata',
+            year: 'numeric', month: 'numeric', day: 'numeric',
             hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true
         })
         : 'N/A';
+
     const wifiMac = status?.data?.find(item => item.label === 'WiFi MAC Address')?.info;
     const ipAddress = status?.data?.find(item => item.label === 'IP Address')?.info;
 

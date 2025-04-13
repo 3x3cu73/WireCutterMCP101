@@ -95,7 +95,7 @@ export default function Navigation({ activity = [true, false, false, false] }) {
                                                 <span className="sr-only">Open user menu</span>
                                                 <img
                                                     alt="User avatar" // More descriptive alt text
-                                                    src="/sarkarSir.png"
+                                                    src="/sarkar_ori.jpeg"
                                                     className="size-8 rounded-full"
                                                 />
                                             </MenuButton>
