@@ -1,6 +1,6 @@
 import './App.css';
 import { Dashboard } from "./pages/Dashboard.jsx";
-import { Route, Routes, useNavigate } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import Team from "./pages/Team.jsx";
 import Login from "./components/Login/login.jsx";
 import Register from "./components/Login/register.jsx";
