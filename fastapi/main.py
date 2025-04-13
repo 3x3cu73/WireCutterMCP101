@@ -559,7 +559,9 @@ def delete_job(job_id: str):
 
 
 @app.post("/mcp101/login")
-def setToken(user,password_hash):
+def setToken(userCredentials:dict):
+    user=userCredentials["username"]
+    password_hash=userCredentials["password_hash"]
     try:
         with get_db_cursor_wireCutter() as cursor:
             select_query = "SELECT role, password_hash FROM users WHERE username = %s"

@@ -1,39 +1,36 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 
 // Optional: Add an icon library like react-icons if you want input icons
 // import { FiMail, FiLock } from 'react-icons/fi';
 
-export default function Login({setToken}) {
+export default function Login({setToken,setLoggedIn}) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Add login logic here
-        console.log("Email:", email, "Password:", password);
-        // Example: You would typically call an API here
-        // loginUser({ email, password });
-    };
 
 
     const handleLogin=async e=>{
         e.preventDefault();
-        const response = await fetch('https://vps.sumitsaw.tech/api/mcp101/login', {
-            method: 'POST',
+        const url = `https://vps.sumitsaw.tech/api/mcp101/login`;
+        const username=email
+        const password_hash=password
+        const response = await axios.post(url, {username,password_hash}, { // Sending 'task' directly
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                // Add Authorization header if needed
             },
-            body: JSON.stringify({ email, password }),
         });
-
-        const data = await response.json();
-        console.log(data);
-        if (response.ok) {
+        const data=response.data;
+        // const data = await response.json();
+        console.log(response.data);
+        if (response) {
             setToken(data.token); // Assuming the token is in data.token
             console.log("Login successful");
+            setLoggedIn(true)
         } else {
-            console.error("Login failed:", data.message);
+            console.error("Login failed:", data.status);
         }
     }
 
@@ -45,7 +42,7 @@ export default function Login({setToken}) {
                 <h2 className="text-3xl font-bold text-gray-800 text-center">
                     Automatic Wire Cutter {/* Updated Title */}
                 </h2>
-                <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                <form onSubmit={handleLogin} className="mt-8 space-y-6">
                     {/* Input Field Container (can add icons here if desired) */}
                     <div className="relative">
                         {/* Optional Icon:
