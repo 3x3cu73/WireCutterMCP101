@@ -22,16 +22,9 @@ function getLoggedInStorage() {
 
 function App() {
     const [loggedIn, setLoggedIn] = useState(getLoggedInStorage());
-    const navigate = useNavigate(); // Import and use useNavigate for navigation
-
     useEffect(() => {
         setLoggedInStorage(loggedIn);
-        if (loggedIn) {
-            // Optionally navigate to the dashboard if already logged in on mount
-            // This prevents the login page from briefly showing on refresh if the user is logged in
-            navigate('/');
-        }
-    }, [loggedIn, navigate]);
+    }, [loggedIn]);
 
     if (!loggedIn) {
         return <Login setToken={setToken} setLoggedIn={setLoggedIn} />;
