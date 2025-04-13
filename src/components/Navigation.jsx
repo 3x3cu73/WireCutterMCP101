@@ -56,7 +56,7 @@ export default function Navigation({ activity = [true, false, false, false] }) {
                                         />
                                         {/* Optional: Text Logo for smaller screens if image hidden */}
                                         {/* <span className="ml-2 text-lg font-semibold text-gray-800 lg:hidden">Logo</span> */}
-                                        &nbsp;&nbsp;&nbsp;&nbsp;<h2 className="font-semibold align-left">Automatic Wire Cutter </h2>&nbsp;
+                                        &nbsp;<h2 className="font-semibold align-left">Automatic Wire Cutter </h2>&nbsp;
                                     </div>
                                     {/* Desktop Links */}
                                     <div className="hidden sm:ml-6 sm:block">
