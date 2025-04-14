@@ -65,8 +65,10 @@ export default function Login({setToken,setLoggedIn}) {
     }
 
     return (
-        // Main container: Full screen, centered content, gradient background
+        <>
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-sky-100 via-blue-200 to-indigo-300 p-4">
+
+            <ToastContainer />
             {/* Login Card: Centered, max-width, padding, background with transparency + blur, rounded, shadow */}
             <div className="w-full max-w-md p-8 space-y-8 bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-100">
                 <h2 className="text-3xl font-bold text-gray-800 text-center">
@@ -125,6 +127,7 @@ export default function Login({setToken,setLoggedIn}) {
                             </>
                         ) : ( 'Login' ) }
                     </button>
+
                 </form>
                 <p className="mt-6 text-sm text-center text-gray-600">
                     Don't have an account?{" "}
@@ -134,7 +137,8 @@ export default function Login({setToken,setLoggedIn}) {
                 </p>
             </div>
 
-            <ToastContainer className="m-3"/>
+
         </div>
+            </>
     );
 }

@@ -5,6 +5,8 @@ import Team from "./pages/Team.jsx";
 import Login from "./components/Login/login.jsx";
 import Register from "./components/Login/register.jsx";
 import React, { useState, useEffect } from "react";
+import { SpeedInsights } from '@vercel/speed-insights/react';
+
 
 function setToken(token) {
     sessionStorage.setItem("token", JSON.stringify(token));
@@ -29,6 +31,7 @@ function App() {
     if (!loggedIn) {
 
         return <Routes>
+            <SpeedInsights />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login setToken={setToken} setLoggedIn={setLoggedIn} />} />
             <Route path="/" element={<Login setToken={setToken} setLoggedIn={setLoggedIn} />} />
@@ -39,6 +42,8 @@ function App() {
         <div className="min-h-screen flex flex-col bg-gray-50">
             {/* Main Application Routes */}
             <Routes>
+                <SpeedInsights />
+
                 {/* Dashboard Route */}
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/login" element={<Dashboard />} />
