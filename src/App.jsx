@@ -27,7 +27,12 @@ function App() {
     }, [loggedIn]);
 
     if (!loggedIn) {
-        return <Login setToken={setToken} setLoggedIn={setLoggedIn} />;
+
+        return <Routes>
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login setToken={setToken} setLoggedIn={setLoggedIn} />} />
+            <Route path="/" element={<Login setToken={setToken} setLoggedIn={setLoggedIn} />} />
+        </Routes>;
     }
 
     return (
@@ -36,10 +41,10 @@ function App() {
             <Routes>
                 {/* Dashboard Route */}
                 <Route path="/" element={<Dashboard />} />
-
+                <Route path="/login" element={<Dashboard />} />
                 {/* Team Route */}
                 <Route path="/Team" element={<Team />} />
-                <Route path="/register" element={<Register />} />
+
             </Routes>
         </div>
     );

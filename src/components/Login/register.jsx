@@ -1,22 +1,48 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-
-// Optional: Add an icon library like react-icons if you want input icons
-// import { FiUser, FiMail, FiLock } from 'react-icons/fi';
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function Register() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [username, setUsername] = useState("");
+
+    // Use the `useNavigate` hook to programmatically navigate
+    const navigate = useNavigate();
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Add registration logic here
-        console.log("Name:", name, "Email:", email, "Password:", password);
-        // Example: You would typically call an API here
-        // registerUser({ name, email, password });
-    };
 
+        async function registerUser(userCredentials) {
+            console.log("userCredentials", userCredentials);
+            const url = `https://vps.sumitsaw.tech/api/mcp101/register`;
+            try {
+                const response = await axios.post(url, userCredentials, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                    },
+                });
+
+                console.log(response.data);
+
+                // Navigate to /login on successful registration
+                if (response.status === 200 || response.status === 201) {
+                    navigate("/login");
+                }
+            } catch (error) {
+                console.error("Error during registration:", error);
+            }
+        }
+
+        const role = "user";
+        const password_hash = password;
+
+        registerUser({ name, email, username, password_hash, role }).then((r) =>
+            console.log(r)
+        );
+    };
     return (
         // Main container: Full screen, centered content, gradient background
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-sky-100 via-blue-200 to-indigo-300 p-4">
@@ -44,6 +70,24 @@ export default function Register() {
                         />
                     </div>
 
+                    <div className="relative">
+                        {/* Optional Icon:
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            <FiMail />
+                        </span> */}
+                        <input
+                            type="text"
+                            id="username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                            placeholder="Username" // Placeholder text
+                            className="block w-full px-4 py-3 text-gray-700 bg-white/80 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none transition duration-150 ease-in-out"
+                            // Add pl-10 if using icon
+                        />
+                    </div>
+
+
                     {/* Input Field Container (Email) */}
                     <div className="relative">
                         {/* Optional Icon:
@@ -51,12 +95,12 @@ export default function Register() {
                             <FiMail />
                         </span> */}
                         <input
-                            type="email"
+                            type="text"
                             id="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            placeholder="Email Address" // Placeholder text
+                            placeholder="Email Address " // Placeholder text
                             className="block w-full px-4 py-3 text-gray-700 bg-white/80 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none transition duration-150 ease-in-out"
                             // Add pl-10 if using icon
                         />

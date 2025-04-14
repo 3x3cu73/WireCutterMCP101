@@ -1,5 +1,5 @@
 import React, { useState} from "react";
-import { Link } from "react-router-dom";
+import { Link,Navigate } from "react-router-dom";
 import axios from "axios";
 
 // Optional: Add an icon library like react-icons if you want input icons
@@ -36,6 +36,7 @@ export default function Login({setToken,setLoggedIn}) {
             setToken(data.token); // Assuming the token is in data.token
             console.log("Login successful");
             setLoggedIn(true)
+
 
         } else {
             console.error("Login failed:", data.status);

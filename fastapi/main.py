@@ -1,3 +1,5 @@
+import logging
+
 from distutils.util import execute
 import time , secrets
 
@@ -624,6 +626,38 @@ def getToken(user):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Database error: {str(e)}"
         )
+
+
+@app.post("/mcp101/register")
+def registeruser(userCredentials:dict):
+    logging.info(userCredentials)
+
+    username=userCredentials["username"]
+    password_hash=userCredentials["password_hash"]
+    email=userCredentials["email"]
+    name=userCredentials["name"]
+    # cosole.log(userCredentials)
+
+    try:
+        with get_db_cursor_wireCutter() as cursor:
+            select_query = "SELECT COUNT(*) FROM users WHERE username = %s"
+            cursor.execute(select_query, (username,))
+            result = cursor.fetchone()
+            if result[0] > 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User already exists"
+                )
+            else:
+                insert_query = "INSERT INTO users (username, password_hash, email,name) VALUES (%s, %s, %s,%s)"
+                cursor.execute(insert_query, (username, password_hash, email,name))
+                return {"status": "User registered successfully"}
+    except mysql.connector.Error as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}"
+        )
+
 
 
 # ----------------------
