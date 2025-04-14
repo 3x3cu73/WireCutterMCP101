@@ -5,7 +5,7 @@ import Team from "./pages/Team.jsx";
 import Login from "./components/Login/login.jsx";
 import Register from "./components/Login/register.jsx";
 import React, { useState, useEffect } from "react";
-import { SpeedInsights } from '@vercel/speed-insights/react';
+
 
 
 function setToken(token) {
@@ -52,7 +52,7 @@ function App() {
                 <Route path="/login" element={<Dashboard />} />
                 {/* Team Route */}
                 <Route path="/Team" element={<Team />} />
-                <SpeedInsights />
+
             </Routes>
 
         </div>
