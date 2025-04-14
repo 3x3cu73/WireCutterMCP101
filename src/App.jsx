@@ -36,7 +36,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login setToken={setToken} setLoggedIn={setLoggedIn} />} />
             <Route path="/" element={<Login setToken={setToken} setLoggedIn={setLoggedIn} />} />
-                <SpeedInsights />
+
         </Routes>
             </div>);
     }
@@ -52,7 +52,7 @@ function App() {
                 <Route path="/login" element={<Dashboard />} />
                 {/* Team Route */}
                 <Route path="/Team" element={<Team />} />
-
+                <SpeedInsights />
             </Routes>
 
         </div>
