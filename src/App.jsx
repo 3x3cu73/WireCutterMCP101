@@ -30,19 +30,22 @@ function App() {
 
     if (!loggedIn) {
 
-        return <Routes>
-            <SpeedInsights />
+        return (
+            <div><Routes>
+
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login setToken={setToken} setLoggedIn={setLoggedIn} />} />
             <Route path="/" element={<Login setToken={setToken} setLoggedIn={setLoggedIn} />} />
-        </Routes>;
+                <SpeedInsights />
+        </Routes>
+            </div>);
     }
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             {/* Main Application Routes */}
             <Routes>
-                <SpeedInsights />
+
 
                 {/* Dashboard Route */}
                 <Route path="/" element={<Dashboard />} />
@@ -51,6 +54,7 @@ function App() {
                 <Route path="/Team" element={<Team />} />
 
             </Routes>
+
         </div>
     );
 }
