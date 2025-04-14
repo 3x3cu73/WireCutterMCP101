@@ -134,7 +134,7 @@ export default function Login({setToken,setLoggedIn}) {
                 </p>
             </div>
 
-            <ToastContainer/>
+            <ToastContainer className="m-3"/>
         </div>
     );
 }
