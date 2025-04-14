@@ -1,6 +1,9 @@
 import React, { useState} from "react";
 import { Link,Navigate } from "react-router-dom";
 import axios from "axios";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 // Optional: Add an icon library like react-icons if you want input icons
 // import { FiMail, FiLock } from 'react-icons/fi';
@@ -39,11 +42,22 @@ export default function Login({setToken,setLoggedIn}) {
 
 
         } else {
+
             console.error("Login failed:", data.status);
 
         }
         }
     catch(error) {
+        toast.error(error.response?.data?.message || 'Login failed.', {
+            position: "top-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+        });
         setIsLoading(false)
             console.log(error)
 
@@ -119,6 +133,8 @@ export default function Login({setToken,setLoggedIn}) {
                     </Link>
                 </p>
             </div>
+
+            <ToastContainer/>
         </div>
     );
 }
