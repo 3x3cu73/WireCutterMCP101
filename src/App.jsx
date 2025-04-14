@@ -7,7 +7,6 @@ import Register from "./components/Login/register.jsx";
 import React, { useState, useEffect } from "react";
 
 
-
 function setToken(token) {
     sessionStorage.setItem("token", JSON.stringify(token));
 }
@@ -31,7 +30,8 @@ function App() {
     if (!loggedIn) {
 
         return (
-            <div><Routes>
+            <div>
+                <Routes>
 
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login setToken={setToken} setLoggedIn={setLoggedIn} />} />
