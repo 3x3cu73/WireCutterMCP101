@@ -9,7 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 // import { FiMail, FiLock } from 'react-icons/fi';
 
 export default function Login({setToken,setLoggedIn}) {
-    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading]=useState(false);
 
@@ -18,7 +18,7 @@ export default function Login({setToken,setLoggedIn}) {
         setIsLoading(true)
         e.preventDefault();
         const url = `https://vps.sumitsaw.tech/api/mcp101/login`;
-        const username=email
+        // const username=email
         const password_hash=password
         try {
             const response = await axios.post(url, {username,password_hash}, { // Sending 'task' directly
@@ -83,11 +83,11 @@ export default function Login({setToken,setLoggedIn}) {
                         </span> */}
                         <input
                             type="text"
-                            id="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            id="username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
                             required
-                            placeholder="Email Address" // Placeholder text
+                            placeholder="Username" // Placeholder text
                             className="block w-full px-4 py-3 text-gray-700 bg-white/80 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none transition duration-150 ease-in-out"
                             // Add pl-10 if using icon
                         />
