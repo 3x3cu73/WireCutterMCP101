@@ -660,6 +660,33 @@ def registeruser(userCredentials:dict):
 
 
 
+@app.get("/mcp101/toDo")
+def get_highest_ranked_job():
+    """Get the job with the highest rank."""
+    try:
+        select_query = """
+        SELECT jobs.*, `rank`.jobRank
+        FROM jobs
+        JOIN `rank` ON jobs.jobid = `rank`.jobid
+        ORDER BY `rank`.jobRank DESC
+        LIMIT 1;
+        """
+        with get_db_cursor_wireCutter() as cursor:
+            cursor.execute(select_query)
+            result = cursor.fetchone()
+            if result:
+                return {"job": result}
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="No jobs found"
+                )
+    except mysql.connector.Error as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}"
+        )
+
 # ----------------------
 # COnfiguration
 # ----------------------
