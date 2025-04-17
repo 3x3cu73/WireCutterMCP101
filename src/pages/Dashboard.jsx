@@ -35,6 +35,13 @@ import CurrentJobDisplayWithProgressAndPause from "../components/currentJob.jsx"
 import CurrentJobDisplayCollapsibleWithPause from "../components/currentJob.jsx";
 import CurrentJobDisplayCollapsibleWithPause_Fixed from "../components/currentJob.jsx";
 import CurrentJobDisplaySmoothCollapsible from "../components/currentJob.jsx";
+import CurrentJobDisplayWithProgressAndPause_ResetAnim from "../components/currentJob.jsx";
+import CurrentJobDisplayWithProgressAndPause_ResetAnim_Fixed from "../components/currentJob.jsx";
+import CurrentJobDisplaySmoothCollapsibleFinal from "../components/currentJob.jsx";
+import CurrentJobDisplayNoSpinnerOnProgress from "../components/currentJob.jsx";
+import CurrentJobDisplay_FinalSmooth from "../components/currentJob.jsx";
+import CurrentJobDisplay_FixInfiniteLoop from "../components/currentJob.jsx";
+import CurrentJobDisplay from "../components/currentJob.jsx";
 // --- Make sure you have a delete service ---
 // import { deleteTaskService } from '../services/deleteTask'; // Example import name
 
@@ -243,7 +250,7 @@ export const Dashboard = () => {
         <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-200 to-indigo-300">
             <Navigation activity={activity} />
             <BeautifulStatusDisplay />
-            <CurrentJobDisplayWithProgressAndPause/>
+            <CurrentJobDisplay/>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <Analytics />
