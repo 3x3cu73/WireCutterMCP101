@@ -101,7 +101,7 @@ function CurrentJobDisplay() {
                         fetchedDeviceOnline = timeDiff < DEVICE_ONLINE_THRESHOLD_SECONDS;
                         fetchedLastUpdate = data.time * 1000;
                     } else { currentErrors.push("Inv device status format."); }
-                } catch (e) { currentErrors.push("Parse device status fail."); }
+                } catch  { currentErrors.push("Parse device status fail."); }
             } else { currentErrors.push(`Device API: ${statusRes.status === 'fulfilled' ? statusRes.value.statusText : statusRes.reason?.message || 'Unknown'}`); }
 
             // Process Job Status (Critical if fetch fails)
@@ -116,7 +116,7 @@ function CurrentJobDisplay() {
                         fetchedJobData = data;
                         jobStatusOk = true;
                     } else { currentErrors.push("Inv job data format."); }
-                } catch (e) { currentErrors.push("Parse job JSON fail."); }
+                } catch  { currentErrors.push("Parse job JSON fail."); }
             } else if (todoRes.status === 'fulfilled' && todoRes.value.status !== 404) {
                 currentErrors.push(`Job API: ${todoRes.value.statusText}`);
             } // 404 means jobStatusOk remains false (idle)
@@ -133,7 +133,7 @@ function CurrentJobDisplay() {
                             fetchedProgress = Math.max(0, Math.min(100, calc)); // Clamp between 0 and 100
                             progressFetchSucceeded = true;
                         } else { currentErrors.push("Inv progress format or value."); }
-                    } catch (e) { currentErrors.push("Parse progress fail."); }
+                    } catch { currentErrors.push("Parse progress fail."); }
                 }
                 if (!progressFetchSucceeded) {
                     const reason = progressRes.status === 'fulfilled'
@@ -209,7 +209,7 @@ function CurrentJobDisplay() {
     // --- Effect for Polling ---
     useEffect(() => {
         const intervalFetch = () => { fetchAllStatus(false); };
-        fetchAllStatus(true); // Initial fetch
+        fetchAllStatus(true).then(r => console.log(r)); // Initial fetch
         const intervalId = setInterval(intervalFetch, POLLING_INTERVAL_MS);
         return () => clearInterval(intervalId);
         // eslint-disable-next-line react-hooks/exhaustive-deps
