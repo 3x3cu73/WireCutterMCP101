@@ -1,11 +1,11 @@
-// src/components/CurrentJobDisplay.jsx (Final Version - Syntax Checked & Progress Fix)
-import React, { useState, useEffect, useMemo } from 'react';
+// src/components/CurrentJobDisplay.jsx
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-    faSpinner, faCogs, faExclamationCircle, faBoxOpen,
-    faRulerHorizontal, faCut, faCheckCircle, faPauseCircle, faFileAlt,
-    faChartLine, faChevronDown, faChevronUp, faWifi, faPause
+    faSpinner, faCogs, faExclamationCircle, faBoxOpen, faRulerHorizontal,
+    faCut, faCheckCircle, faPauseCircle, faFileAlt, faChartLine,
+    faChevronDown, faChevronUp, faWifi, faPause, faTimesCircle
 } from '@fortawesome/free-solid-svg-icons';
 
 // --- Animation Variants ---
@@ -20,8 +20,12 @@ const overlayVariants = {
 };
 
 // --- Constants ---
-const DEVICE_ONLINE_THRESHOLD_SECONDS = 5;
-const POLLING_INTERVAL_MS = 3000;
+const DEVICE_ONLINE_THRESHOLD_SECONDS = 7;
+const POLLING_INTERVAL_MS = 1000;
+const API_BASE_URL = 'https://vps.sumitsaw.tech/api/mcp101';
+const API_STATUS_ENDPOINT = `${API_BASE_URL}/status/last`;
+const API_TODO_ENDPOINT = `${API_BASE_URL}/toDo`;
+const API_PROGRESS_ENDPOINT = `${API_BASE_URL}/progress`;
 
 // --- Helper Sub-component: Memoized DetailItem ---
 const DetailItem = React.memo(({ icon, label, value, unit, color = 'gray' }) => {
@@ -33,6 +37,7 @@ const DetailItem = React.memo(({ icon, label, value, unit, color = 'gray' }) => 
     }), []);
     const selectedColor = colors[color] || colors.gray;
     const displayValue = value === null || value === undefined ? 'N/A' : typeof value === 'number' ? value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : value;
+
     return (
         <div className={`flex items-center p-3 rounded-lg shadow-sm border border-gray-200/60 ${selectedColor.bg}`}>
             <FontAwesomeIcon icon={icon} className={`w-5 h-5 mr-3 flex-shrink-0 ${selectedColor.icon}`} />
@@ -45,6 +50,7 @@ const DetailItem = React.memo(({ icon, label, value, unit, color = 'gray' }) => 
         </div>
     );
 });
+DetailItem.displayName = 'DetailItem';
 
 // --- Main Component ---
 function CurrentJobDisplay() {
@@ -54,166 +60,226 @@ function CurrentJobDisplay() {
     const [deviceIsOnline, setDeviceIsOnline] = useState(false);
     const [lastDeviceUpdate, setLastDeviceUpdate] = useState(null);
     const [fetchError, setFetchError] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true); // Still true initially
     const [isExpanded, setIsExpanded] = useState(false);
 
-    // --- API Endpoints ---
-    const API_STATUS_ENDPOINT = 'https://vps.sumitsaw.tech/api/mcp101/status/last';
-    const API_TODO_ENDPOINT = 'https://vps.sumitsaw.tech/api/mcp101/toDo';
-    const API_PROGRESS_ENDPOINT = 'https://vps.sumitsaw.tech/api/mcp101/progress';
+    // Ref to track if it's the very first fetch attempt
+    const isInitialFetchAttempt = useRef(true);
+    const isMounted = useRef(true);
+    useEffect(() => {
+        isMounted.current = true;
+        return () => { isMounted.current = false; };
+    }, []);
+
 
     // --- Fetching Logic ---
-    const fetchAllStatus = async (isInitialFetch = false) => {
-        if (isInitialFetch) {
-            setIsLoading(true);
-            setFetchError(null);
-        }
+    // No longer needs isInitialFetch parameter for loading state
+    const fetchAllStatus = useCallback(async () => {
+        if (!isMounted.current) return;
+
+        // We don't set isLoading here anymore for polling/retry
+
+        // Capture state *before* async calls
+        const localCurrentJobId = currentJob?.jobid;
+        const localProgressPercent = progressPercent;
+        const localDeviceIsOnline = deviceIsOnline;
+        const localFetchError = fetchError;
+        const localLastDeviceUpdate = lastDeviceUpdate;
 
         let fetchedJobData = null;
         let fetchedProgress = 0;
         let fetchedDeviceOnline = false;
         let fetchedLastUpdate = null;
-        let jobStatusOk = false;
-        let currentErrors = [];
+        let jobFetchOk = false;
+        let jobDataFound = false;
+        let progressFetchOk = false;
+        let deviceStatusFetchOk = false;
+
+        const errors = [];
         let criticalErrorOccurred = false;
 
-        // Read current state *before* fetches for comparison
-        const localCurrentJob = currentJob;
-        const localProgressPercent = progressPercent;
-        const localDeviceIsOnline = deviceIsOnline;
-        const localFetchError = fetchError;
-        const localLastDeviceUpdate = lastDeviceUpdate;
-        const localIsExpanded = isExpanded;
-
         try {
-            const [statusRes, todoRes, progressRes] = await Promise.allSettled([
+            // Clear non-critical errors before each fetch attempt *after* the initial one
+            // This prevents old non-critical errors from sticking around indefinitely
+            if (!isInitialFetchAttempt.current && localFetchError && !(localFetchError.includes('Job Fetch Failed') || localFetchError.includes('Job API Error'))) {
+                if(isMounted.current) setFetchError(null); // Clear only non-critical errors
+            } else if (isInitialFetchAttempt.current) {
+                if(isMounted.current) setFetchError(null); // Clear all errors on very first attempt
+            }
+
+
+            // --- Fetch all endpoints concurrently ---
+            const results = await Promise.allSettled([
                 fetch(API_STATUS_ENDPOINT, { headers: { 'accept': 'application/json' }, cache: 'no-store' }),
                 fetch(API_TODO_ENDPOINT, { method: 'POST', headers: { 'accept': 'application/json' }, body: '', cache: 'no-store' }),
                 fetch(API_PROGRESS_ENDPOINT, { method: 'POST', headers: { 'accept': 'application/json' }, body: '', cache: 'no-store' })
             ]);
 
-            // Process Device Status
-            if (statusRes.status === 'fulfilled' && statusRes.value.ok) {
-                try {
-                    const data = await statusRes.value.json();
-                    if (data && typeof data.time === 'number') {
-                        const timeDiff = Math.floor(Date.now() / 1000) - Math.floor(data.time);
-                        fetchedDeviceOnline = timeDiff < DEVICE_ONLINE_THRESHOLD_SECONDS;
-                        fetchedLastUpdate = data.time * 1000;
-                    } else { currentErrors.push("Inv device status format."); }
-                } catch  { currentErrors.push("Parse device status fail."); }
-            } else { currentErrors.push(`Device API: ${statusRes.status === 'fulfilled' ? statusRes.value.statusText : statusRes.reason?.message || 'Unknown'}`); }
+            const [statusRes, todoRes, progressRes] = results;
 
-            // Process Job Status (Critical if fetch fails)
+            // --- Processing logic remains the same ---
+            // --- 1. Process Device Status ---
+            if (statusRes.status === 'fulfilled') {
+                if (statusRes.value.ok) {
+                    try {
+                        const data = await statusRes.value.json();
+                        if (data && typeof data.time === 'number') {
+                            const nowSeconds = Math.floor(Date.now() / 1000);
+                            const deviceTimeSeconds = Math.floor(data.time);
+                            const timeDiff = nowSeconds - deviceTimeSeconds;
+                            fetchedDeviceOnline = timeDiff >= 0 && timeDiff < DEVICE_ONLINE_THRESHOLD_SECONDS;
+                            fetchedLastUpdate = deviceTimeSeconds * 1000;
+                            deviceStatusFetchOk = true;
+                        } else { errors.push("Invalid device status format."); }
+                    } catch (e) { errors.push("Failed to parse device status JSON."); }
+                } else { errors.push(`Device Status API Error: ${statusRes.value.status} ${statusRes.value.statusText}`); }
+            } else { errors.push(`Device Status Fetch Failed: ${statusRes.reason?.message || 'Network Error'}`); }
+
+            // --- 2. Process Job Status ---
             if (todoRes.status === 'rejected') {
                 criticalErrorOccurred = true;
-                throw new Error(`Network error (Job): ${todoRes.reason?.message || 'Unknown'}`);
+                throw new Error(`Job Fetch Failed: ${todoRes.reason?.message || 'Network Error'}`);
             }
-            if (todoRes.status === 'fulfilled' && todoRes.value.ok) {
+            jobFetchOk = true;
+            if (todoRes.value.ok) {
                 try {
                     const data = await todoRes.value.json();
                     if (data && data.jobid) {
                         fetchedJobData = data;
-                        jobStatusOk = true;
-                    } else { currentErrors.push("Inv job data format."); }
-                } catch  { currentErrors.push("Parse job JSON fail."); }
-            } else if (todoRes.status === 'fulfilled' && todoRes.value.status !== 404) {
-                currentErrors.push(`Job API: ${todoRes.value.statusText}`);
-            } // 404 means jobStatusOk remains false (idle)
+                        jobDataFound = true;
+                    } else { errors.push("Invalid job data format."); }
+                } catch (e) { errors.push("Failed to parse job JSON."); }
+            } else if (todoRes.value.status === 404) {
+                jobDataFound = false;
+            } else {
+                criticalErrorOccurred = true;
+                throw new Error(`Job API Error: ${todoRes.value.status} ${todoRes.value.statusText}`);
+            }
 
-            // Process Progress (Only if job is OK)
-            if (jobStatusOk) {
-                let progressFetchSucceeded = false;
-                if (progressRes.status === 'fulfilled' && progressRes.value.ok) {
-                    try {
-                        const data = await progressRes.value.json();
-                        // Ensure 'output' exists and is a number before calculation
-                        if (data && typeof data.output === 'number' && isFinite(data.output)) {
-                            let calc = Math.round(data.output * 100);
-                            fetchedProgress = Math.max(0, Math.min(100, calc)); // Clamp between 0 and 100
-                            progressFetchSucceeded = true;
-                        } else { currentErrors.push("Inv progress format or value."); }
-                    } catch { currentErrors.push("Parse progress fail."); }
-                }
-                if (!progressFetchSucceeded) {
-                    const reason = progressRes.status === 'fulfilled'
-                        ? `API Error ${progressRes.value.status} ${progressRes.value.statusText}`
-                        : progressRes.reason?.message || 'Unknown fetch error';
-                    currentErrors.push(`Progress API: ${reason}`);
-                    console.warn(`Progress fetch failed: ${reason}`);
-                    // Fallback: Keep current progress if job is the same, otherwise reset to 0
-                    if (fetchedJobData?.jobid === localCurrentJob?.jobid) {
+            // --- 3. Process Progress ---
+            if (jobDataFound) {
+                if (progressRes.status === 'fulfilled') {
+                    if (progressRes.value.ok) {
+                        try {
+                            const data = await progressRes.value.json();
+                            if (data && typeof data.output === 'number' && isFinite(data.output)) {
+                                let calc = Math.round(data.output * 100);
+                                fetchedProgress = Math.max(0, Math.min(100, calc));
+                                progressFetchOk = true;
+                            } else { errors.push("Invalid progress format or value."); }
+                        } catch (e) { errors.push("Failed to parse progress JSON."); }
+                    } else { errors.push(`Progress API Error: ${progressRes.value.status} ${progressRes.value.statusText}`); }
+                } else { errors.push(`Progress Fetch Failed: ${progressRes.reason?.message || 'Network Error'}`); }
+
+                if (!progressFetchOk) {
+                    if (fetchedJobData?.jobid === localCurrentJobId) {
                         fetchedProgress = localProgressPercent;
-                    } else { fetchedProgress = 0; }
-                }
-            } else { fetchedProgress = 0; } // Reset progress if no job
-
-
-            // --- Conditional State Updates ---
-            const jobIdentityChanged = (fetchedJobData?.jobid !== localCurrentJob?.jobid) || (!!fetchedJobData !== !!localCurrentJob);
-
-            // 1. Update Job State & Associated Progress/Expansion
-            if (jobIdentityChanged) {
-                setCurrentJob(fetchedJobData);
-                // *** FIX: Always update progress when job identity changes ***
-                // This ensures the bar resets to 0% (or the correct initial %) for a new job.
-                setProgressPercent(fetchedProgress);
-                // Auto-collapse when job changes (e.g., goes from active to idle)
-                if (localIsExpanded) {
-                    setIsExpanded(false);
+                        // Don't push "Using previous progress..." if we are auto-clearing errors anyway
+                        // errors.push("Using previous progress due to fetch failure.");
+                    } else {
+                        fetchedProgress = 0;
+                    }
                 }
             } else {
-                // 2. Update Progress only if job is the same AND progress value changed
-                if (fetchedProgress !== localProgressPercent) {
-                    setProgressPercent(fetchedProgress);
-                }
+                fetchedProgress = 0;
             }
 
-            // 3. Update other states if they changed
-            if (fetchedDeviceOnline !== localDeviceIsOnline) { setDeviceIsOnline(fetchedDeviceOnline); }
-            if (fetchedLastUpdate !== localLastDeviceUpdate) { setLastDeviceUpdate(fetchedLastUpdate); }
-            const newErrorString = currentErrors.length > 0 ? currentErrors.join('; ') : null;
-            if (newErrorString !== localFetchError) { setFetchError(newErrorString); }
+            // --- Update State Conditionally (logic remains same) ---
+            if (!isMounted.current) return;
 
-        } catch (criticalError) {
+            const jobIdentityChanged = fetchedJobData?.jobid !== localCurrentJobId;
+            const progressChanged = fetchedProgress !== localProgressPercent;
+            const onlineStatusChanged = fetchedDeviceOnline !== localDeviceIsOnline;
+            const lastUpdateChanged = fetchedLastUpdate !== localLastDeviceUpdate;
+            // Combine new errors with existing critical error if one exists
+            const newErrorString = errors.length > 0 ? errors.join('; ') : null;
+            const finalErrorString = criticalErrorOccurred
+                ? (fetchError?.includes('Job Fetch Failed') || fetchError?.includes('Job API Error') ? fetchError : newErrorString) // Keep existing critical, else use new
+                : newErrorString;
+            const errorChanged = finalErrorString !== localFetchError;
+
+
+            if (jobIdentityChanged) {
+                setCurrentJob(fetchedJobData);
+                setProgressPercent(fetchedProgress);
+                if (isExpanded && !fetchedJobData) setIsExpanded(false);
+            } else if (progressChanged) {
+                setProgressPercent(fetchedProgress);
+            }
+
+            if (onlineStatusChanged) setDeviceIsOnline(fetchedDeviceOnline);
+            if (lastUpdateChanged) setLastDeviceUpdate(fetchedLastUpdate);
+            // Update error state only if it changed, respecting critical errors
+            if (errorChanged && !criticalErrorOccurred) { // Only update non-critical if no critical occurred in *this* run
+                setFetchError(finalErrorString);
+            }
+
+
+        } catch (error) {
+            console.error("Critical fetch error:", error);
+            if (!isMounted.current) return;
+
             criticalErrorOccurred = true;
-            console.error("Critical fetch error:", criticalError);
-            const critMsg = criticalError?.message || 'Unknown critical error';
-            // Reset states only if they differ from the 'error' state defaults
-            if (localFetchError !== critMsg) setFetchError(critMsg);
-            if (localCurrentJob !== null) setCurrentJob(null);
-            if (localProgressPercent !== 0) setProgressPercent(0); // Ensure progress resets on critical error
-            if (localDeviceIsOnline !== false) setDeviceIsOnline(false);
-            if (localLastDeviceUpdate !== null) setLastDeviceUpdate(null);
-            if (localIsExpanded !== false) setIsExpanded(false);
+            const errorMessage = error?.message || 'An unknown critical error occurred.';
+
+            // Set critical error state
+            if (errorMessage !== localFetchError) setFetchError(errorMessage);
+
+            // Reset other states only if necessary
+            if (currentJob !== null) setCurrentJob(null);
+            if (progressPercent !== 0) setProgressPercent(0);
+            if (deviceIsOnline !== false) setDeviceIsOnline(false);
+            if (lastDeviceUpdate !== null) setLastDeviceUpdate(null);
+            if (isExpanded !== false) setIsExpanded(false);
+
         } finally {
-            if (isInitialFetch) {
+            // *** Key Change: Only set isLoading false on the *first* attempt ***
+            if (isMounted.current && isInitialFetchAttempt.current) {
                 setIsLoading(false);
+                isInitialFetchAttempt.current = false; // Mark initial fetch as done
             }
-            // Ensure critical error is reflected if it occurred during fetch
-            if (criticalErrorOccurred && (!fetchError || !fetchError.includes('Network error (Job)'))) {
-                const critMsg = fetchError || 'Unknown critical error during fetch'; // Re-assert
+            // Ensure critical error state persists if needed, even if caught in finally
+            if (isMounted.current && criticalErrorOccurred && (!fetchError?.includes('Job Fetch Failed') && !fetchError?.includes('Job API Error'))) {
+                const critMsg = fetchError || 'Critical error occurred during fetch.';
                 setFetchError(critMsg);
             }
         }
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isExpanded, currentJob?.jobid, progressPercent, deviceIsOnline, fetchError, lastDeviceUpdate]); // Dependencies remain
 
     // --- Derived Status Calculation ---
     const derivedStatus = useMemo(() => {
+        // Loading state is now only true very briefly on initial mount
         if (isLoading) return 'loading';
-        if (fetchError && fetchError.toLowerCase().includes('network error (job)')) { return 'error'; }
-        if (currentJob) { return deviceIsOnline ? 'running' : 'paused'; }
-        else { return 'idle'; }
+        if (fetchError && (fetchError.includes('Job Fetch Failed') || fetchError.includes('Job API Error'))) {
+            return 'error';
+        }
+        if (currentJob) {
+            return deviceIsOnline ? 'running' : 'paused';
+        }
+        return 'idle';
     }, [isLoading, currentJob, deviceIsOnline, fetchError]);
 
-    // --- Effect for Polling ---
+    // --- Effect for Initial Fetch & Polling ---
     useEffect(() => {
-        const intervalFetch = () => { fetchAllStatus(false); };
-        fetchAllStatus(true).then(r => console.log(r)); // Initial fetch
-        const intervalId = setInterval(intervalFetch, POLLING_INTERVAL_MS);
-        return () => clearInterval(intervalId);
+        isMounted.current = true;
+        isInitialFetchAttempt.current = true; // Ensure flag is true on mount
+        // Don't set isLoading(true) here, it's the default state
+
+        // Initial Fetch
+        fetchAllStatus(); // Call without arguments
+
+        // Polling
+        const intervalId = setInterval(() => {
+            fetchAllStatus(); // Call without arguments
+        }, POLLING_INTERVAL_MS);
+
+        return () => {
+            isMounted.current = false;
+            clearInterval(intervalId);
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Keep empty deps: fetchAllStatus is stable as it reads state internally
+    }, [fetchAllStatus]); // fetchAllStatus is memoized
 
     // --- Effect to Auto-collapse on Idle or Critical Error ---
     useEffect(() => {
@@ -224,33 +290,35 @@ function CurrentJobDisplay() {
 
     // --- Toggle Handler ---
     const toggleExpand = () => {
-        setIsExpanded(prev => !prev);
+        if (currentJob) {
+            setIsExpanded(prev => !prev);
+        }
     };
 
     // --- Helper to get Status Badge ---
-    const getStatusBadge = () => {
-        // ... (getStatusBadge function remains the same)
+    const getStatusBadge = useMemo(() => {
+        // Loading badge will now likely never be seen unless the first fetch is very slow
         switch (derivedStatus) {
             case 'running': return ( <span className="inline-flex items-center gap-x-1.5 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700 shadow-sm border border-green-200" title={`Device online. Last update: ${lastDeviceUpdate ? new Date(lastDeviceUpdate).toLocaleTimeString() : 'N/A'}`}><FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin" /> In Progress</span> );
-            case 'paused':  return ( <span className="inline-flex items-center gap-x-1.5 rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700 shadow-sm border border-orange-200" title={`Device offline. Last update: ${lastDeviceUpdate ? new Date(lastDeviceUpdate).toLocaleTimeString() : 'N/A'}`}><FontAwesomeIcon icon={faPause} className="w-4 h-4" /> Paused</span> );
+            case 'paused':  return ( <span className="inline-flex items-center gap-x-1.5 rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700 shadow-sm border border-orange-200" title={`Device offline or unresponsive. Last update: ${lastDeviceUpdate ? new Date(lastDeviceUpdate).toLocaleTimeString() : 'N/A'}`}><FontAwesomeIcon icon={faPause} className="w-4 h-4" /> Paused</span> );
             case 'idle':    return ( <span className="inline-flex items-center gap-x-1.5 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 shadow-sm border border-gray-200"><FontAwesomeIcon icon={faPauseCircle} className="w-4 h-4" /> Idle</span> );
             case 'error':   return ( <span className="inline-flex items-center gap-x-1.5 rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-700 shadow-sm border border-red-200" title={fetchError || 'An error occurred'}><FontAwesomeIcon icon={faExclamationCircle} className="w-4 h-4" /> Error</span> );
             case 'loading': return ( <span className="inline-flex items-center gap-x-1.5 rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-600 shadow-sm border border-blue-200"><FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin"/> Loading...</span> );
             default: return null;
         }
-    };
+    }, [derivedStatus, lastDeviceUpdate, fetchError]);
 
     // --- Determine if details section can be shown/expanded ---
     const canShowDetails = (derivedStatus === 'running' || derivedStatus === 'paused') && !!currentJob;
 
     // --- Render ---
     return (
-        <div className="p-4">
+        <div className="p-4 max-w-2xl mx-auto">
             <div className="bg-gradient-to-br from-white/70 via-white/80 to-cyan-50/60 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-gray-200/80 relative min-h-[120px]">
 
-                {/* Loading Overlay */}
+                {/* Loading Overlay - Only shown initially */}
                 <AnimatePresence>
-                    {isLoading && (
+                    {isLoading && ( // isLoading is only true before the first fetch completes
                         <motion.div
                             key="loading-overlay"
                             className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-md z-20 pointer-events-none"
@@ -260,101 +328,123 @@ function CurrentJobDisplay() {
                     )}
                 </AnimatePresence>
 
-                {/* Error Overlay */}
+                {/* Error Overlay (Only for critical errors) */}
                 <AnimatePresence>
+                    {/* Show error overlay if not loading AND derivedStatus is error */}
                     {!isLoading && derivedStatus === 'error' && (
                         <motion.div
                             key="error-overlay"
                             className="absolute inset-0 flex flex-col items-center justify-center bg-red-50/80 backdrop-blur-md z-10 p-4 text-center"
                             variants={overlayVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.2 }}>
-                            <FontAwesomeIcon icon={faExclamationCircle} className="w-10 h-10 text-red-500 mb-3" /> <p className="text-red-700 font-semibold text-lg">Status Update Error</p> <p className="text-sm text-red-600 mt-1 max-w-md">{fetchError || 'An unknown error occurred.'}</p> <button onClick={() => fetchAllStatus(true)} className="mt-4 px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"> Retry </button>
+                            <FontAwesomeIcon icon={faTimesCircle} className="w-10 h-10 text-red-500 mb-3" />
+                            <p className="text-red-700 font-semibold text-lg">Status Update Failed</p>
+                            <p className="text-sm text-red-600 mt-1 max-w-md">{fetchError || 'An unknown critical error occurred.'}</p>
+                            {(fetchError?.includes('Fetch Failed') || fetchError?.includes('Network Error') || fetchError?.includes('API Error')) && (
+                                <button
+                                    onClick={() => fetchAllStatus()} // Call without args, won't trigger main loading overlay
+                                    className="mt-4 px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                    Retry
+                                </button>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
 
                 {/* Main Content Area */}
-                {!isLoading && (
-                    <div className={`p-5 transition-opacity duration-300 ${derivedStatus === 'error' ? 'opacity-30 blur-sm pointer-events-none' : 'opacity-100'}`}>
-                        {/* Header Row */}
-                        <div className="flex flex-wrap items-center justify-between gap-y-3 gap-x-4">
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                                <FontAwesomeIcon icon={faCogs} className="w-6 h-6 text-cyan-600 flex-shrink-0" />
-                                <h2 className="text-xl font-bold text-gray-800 tracking-tight truncate">
-                                    {currentJob?.title || (derivedStatus === 'idle' ? 'No Active Job' : derivedStatus === 'loading' ? 'Loading...' : derivedStatus === 'error' ? 'Error State' : 'Status Unavailable')}
-                                </h2>
+                <div className={`p-5 transition-opacity duration-300 ${derivedStatus === 'error' ? 'opacity-50 blur-[1px] ' : 'opacity-100'}`}>
+                    {/* Header Row */}
+                    <div className="flex flex-wrap items-center justify-between gap-y-3 gap-x-4">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <FontAwesomeIcon icon={faCogs} className="w-6 h-6 text-cyan-600 flex-shrink-0" />
+                            {/* Display placeholder text slightly differently if it's the initial load vs subsequent updates */}
+                            <h2 className="text-xl font-bold text-gray-800 tracking-tight truncate" title={currentJob?.title || ''}>
+                                {currentJob?.title || (derivedStatus === 'idle' ? 'No Active Job' : isLoading ? 'Loading...' : derivedStatus === 'error' ? 'Update Failed' : 'Status Unavailable')}
+                            </h2>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                            {getStatusBadge}
+                            {canShowDetails && (
+                                <button
+                                    onClick={toggleExpand}
+                                    className="inline-flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-800 p-1.5 rounded-md hover:bg-blue-100/60 transition-colors focus:outline-none focus:ring-1 focus:ring-blue-300"
+                                    aria-expanded={isExpanded}
+                                    aria-controls="job-details-content"
+                                    title={isExpanded ? 'Hide Details' : 'Show Details'}>
+                                    <span>{isExpanded ? 'Hide' : 'Details'}</span>
+                                    <FontAwesomeIcon icon={isExpanded ? faChevronUp : faChevronDown} className="w-4 h-4 ml-1.5" />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Progress Bar Section */}
+                    {currentJob && (derivedStatus === 'running' || derivedStatus === 'paused') && (
+                        <div className="mt-4">
+                            <div className="flex justify-between items-end mb-1.5">
+                                <span className="text-xs font-medium text-blue-700 flex items-center gap-1.5">
+                                    <FontAwesomeIcon icon={faChartLine} className="w-3.5 h-3.5"/> Progress
+                                    {/* Non-critical error display */}
+                                    {fetchError && derivedStatus !== 'error' && (
+                                        <FontAwesomeIcon icon={faExclamationCircle} className="w-3.5 h-3.5 text-orange-500 ml-1" title={`Warning: ${fetchError}`} />
+                                    )}
+                                </span>
+                                <span className="text-lg font-bold text-gray-800">{progressPercent}%</span>
                             </div>
-                            <div className="flex items-center gap-3 flex-shrink-0">
-                                {getStatusBadge()}
-                                {canShowDetails && (
-                                    <button onClick={toggleExpand} className="inline-flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-800 p-1.5 rounded-md hover:bg-blue-100/60 transition-colors" aria-expanded={isExpanded} title={isExpanded ? 'Collapse Details' : 'Show Details'}>
-                                        <span>{isExpanded ? 'Collapse' : 'Details'}</span>
-                                        <FontAwesomeIcon icon={isExpanded ? faChevronUp : faChevronDown} className="w-4 h-4 ml-1.5" />
-                                    </button>
-                                )}
+                            <div className={`w-full bg-gray-200/80 rounded-full h-3.5 overflow-hidden shadow-inner relative ${derivedStatus === 'paused' ? 'opacity-70' : ''}`}>
+                                <motion.div
+                                    key={currentJob.jobid}
+                                    className={`absolute inset-0 h-full rounded-full ${derivedStatus === 'paused' ? 'bg-gradient-to-r from-orange-400 to-amber-500' : 'bg-gradient-to-r from-blue-500 to-cyan-400'}`}
+                                    initial={{ width: '0%' }}
+                                    animate={{ width: `${progressPercent}%` }}
+                                    transition={{ duration: 0.6, type: "spring", stiffness: 50, damping: 15 }}
+                                />
+                                <div className="absolute inset-0 h-full opacity-20" style={{ backgroundImage: 'linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent)', backgroundSize: '40px 40px' }}></div>
                             </div>
                         </div>
+                    )}
 
-                        {/* Progress Bar Section */}
-                        {(derivedStatus === 'running' || derivedStatus === 'paused') && currentJob && (
-                            <div className="mt-4">
-                                <div className="flex justify-between items-end mb-1.5">
-                                    <span className="text-xs font-medium text-blue-700 flex items-center gap-1.5">
-                                        <FontAwesomeIcon icon={faChartLine} className="w-3.5 h-3.5"/> Progress
-                                        {/* Show warning icon next to progress if there was a non-critical fetch error */}
-                                        {fetchError && derivedStatus !== 'error' && !fetchError.toLowerCase().includes('network error (job)') && (
-                                            <FontAwesomeIcon icon={faExclamationCircle} className="w-3 h-3 text-orange-500 ml-1" title={`Warning: ${fetchError}`} />
-                                        )}
-                                    </span>
-                                    <span className="text-lg font-bold text-gray-800">{progressPercent}%</span>
-                                </div>
-                                <div className={`w-full bg-gray-200/80 rounded-full h-3.5 overflow-hidden shadow-inner relative ${derivedStatus === 'paused' ? 'opacity-70' : ''}`}>
-                                    <motion.div
-                                        // Key change forces re-render & re-animation from initial
-                                        key={currentJob.jobid || 'no-job-progress'}
-                                        className={`absolute inset-0 h-full rounded-full ${derivedStatus === 'paused' ? 'bg-gradient-to-r from-orange-400 to-amber-500' : 'bg-gradient-to-r from-blue-500 to-cyan-400'}`}
-                                        initial={{ width: '0%' }} // Always start from 0 visually on new job
-                                        animate={{ width: `${progressPercent}%` }} // Animate to the current state's percentage
-                                        transition={{ duration: 0.6, type: "spring", stiffness: 50, damping: 15 }}
-                                    />
-                                    {/* Optional: Subtle striping */}
-                                    <div className="absolute inset-0 h-full opacity-20" style={{ backgroundImage: 'linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent)', backgroundSize: '40px 40px' }}></div>
-                                </div>
-                            </div>
-                        )}
+                    {/* Idle Message */}
+                    {/* Show Idle only if not loading and status is idle */}
+                    {derivedStatus === 'idle' && !isLoading && (
+                        <div className="text-center pt-8 pb-4">
+                            <FontAwesomeIcon icon={faPauseCircle} className="w-12 h-12 text-gray-400 mb-3" />
+                            <p className="text-gray-500 font-medium">The machine is currently idle.</p>
+                            <p className="text-sm text-gray-400 mt-1">Waiting for the next job.</p>
+                        </div>
+                    )}
 
-                        {/* Idle Message */}
-                        {derivedStatus === 'idle' && (
-                            <div className="text-center pt-8 pb-4">
-                                <FontAwesomeIcon icon={faPauseCircle} className="w-12 h-12 text-gray-400 mb-3" />
-                                <p className="text-gray-500 font-medium">The machine is currently idle.</p>
-                                <p className="text-sm text-gray-400 mt-1">No job is currently assigned.</p>
-                            </div>
-                        )}
-
-                        {/* Collapsible Details */}
-                        <AnimatePresence initial={false}>
-                            {isExpanded && canShowDetails && (
-                                <motion.div key="details-content" className="overflow-hidden" variants={detailsVariants} initial="collapsed" animate="expanded" exit="collapsed">
-                                    <div className="space-y-4 pt-1">
-                                        {/* Detail Items Grid */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                            <DetailItem icon={faBoxOpen} label="Quantity" value={currentJob?.a} unit="" color="indigo" />
-                                            <DetailItem icon={faRulerHorizontal} label="Length" value={currentJob?.b} unit="mm" color="teal" />
-                                            <DetailItem icon={faCut} label="Stripping" value={currentJob?.c} unit="mm" color="amber" />
-                                        </div>
-                                        {/* Description Block */}
-                                        {currentJob?.description && (
-                                            <div className="p-3 bg-gray-50/80 rounded-lg border border-gray-200/70">
-                                                <h4 className="flex items-center text-xs font-semibold text-gray-500 mb-1.5"> <FontAwesomeIcon icon={faFileAlt} className="w-3.5 h-3.5 mr-1.5 text-gray-400"/> Description </h4>
-                                                <p className="text-sm text-gray-700 whitespace-pre-wrap">{currentJob.description}</p>
-                                            </div>
-                                        )}
+                    {/* Collapsible Details */}
+                    <AnimatePresence initial={false}>
+                        {isExpanded && canShowDetails && (
+                            <motion.div
+                                id="job-details-content"
+                                key="details-content"
+                                className="overflow-hidden"
+                                variants={detailsVariants}
+                                initial="collapsed"
+                                animate="expanded"
+                                exit="collapsed"
+                            >
+                                <div className="space-y-4 pt-1">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <DetailItem icon={faBoxOpen} label="Quantity" value={currentJob?.a} unit="" color="indigo" />
+                                        <DetailItem icon={faRulerHorizontal} label="Length" value={currentJob?.b} unit="mm" color="teal" />
+                                        <DetailItem icon={faCut} label="Stripping" value={currentJob?.c} unit="mm" color="amber" />
                                     </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                )}
+                                    {currentJob?.description && (
+                                        <div className="p-3 bg-gray-50/80 rounded-lg border border-gray-200/70">
+                                            <h4 className="flex items-center text-xs font-semibold text-gray-500 mb-1.5">
+                                                <FontAwesomeIcon icon={faFileAlt} className="w-3.5 h-3.5 mr-1.5 text-gray-400"/> Description
+                                            </h4>
+                                            <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">{currentJob.description}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
             </div>
         </div>
     );
