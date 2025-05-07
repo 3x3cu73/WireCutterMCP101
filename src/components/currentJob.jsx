@@ -24,7 +24,7 @@ const DEVICE_ONLINE_THRESHOLD_SECONDS = 7;
 const POLLING_INTERVAL_MS = 1000;
 const API_BASE_URL = 'https://vps.sumitsaw.tech/api/mcp101';
 const API_STATUS_ENDPOINT = `${API_BASE_URL}/status/last`;
-const API_TODO_ENDPOINT = `${API_BASE_URL}/toDo`; // Corrected endpoint name based on usage
+const API_TODO_ENDPOINT = `${API_BASE_URL}/toDo`;
 const API_PROGRESS_ENDPOINT = `${API_BASE_URL}/progress`;
 
 // --- Helper Sub-component: Memoized DetailItem ---
@@ -59,13 +59,14 @@ function CurrentJobDisplay() {
     const [progressPercent, setProgressPercent] = useState(0);
     const [deviceIsOnline, setDeviceIsOnline] = useState(false);
     const [lastDeviceUpdate, setLastDeviceUpdate] = useState(null);
-    const [fetchError, setFetchError] = useState(null);
+    const [fetchError, setFetchError] = useState(null); // Consolidated error state
     const [isLoading, setIsLoading] = useState(true); // Still true initially
     const [isExpanded, setIsExpanded] = useState(false);
 
-    // Ref to track if it's the very first fetch attempt
+    // Refs
     const isInitialFetchAttempt = useRef(true);
     const isMounted = useRef(true);
+
     useEffect(() => {
         isMounted.current = true;
         return () => { isMounted.current = false; };
@@ -76,179 +77,148 @@ function CurrentJobDisplay() {
     const fetchAllStatus = useCallback(async () => {
         if (!isMounted.current) return;
 
-        // Capture state *before* async calls for comparison
+        // Capture *current* job ID and progress for comparison
         const localCurrentJobId = currentJob?.jobid;
         const localProgressPercent = progressPercent;
-        const localDeviceIsOnline = deviceIsOnline;
-        const localFetchError = fetchError;
-        const localLastDeviceUpdate = lastDeviceUpdate;
 
         let fetchedJobData = null;
-        let fetchedProgress = localProgressPercent; // Start with previous progress in case fetch fails
+        let fetchedProgress = 0; // Default to 0, update if progress fetched
         let fetchedDeviceOnline = false;
         let fetchedLastUpdate = null;
-        let jobFetchOk = false;
-        let jobDataFound = false;
-        let progressFetchOk = false;
-        let deviceStatusFetchOk = false;
 
-        const errors = [];
-        let criticalErrorOccurred = false;
-        let jobDisappeared = false; // Flag to know if job was there, but now isn't
+        const nonCriticalErrors = []; // Collect non-critical issues
+
+        // Clear previous error state before the fetch attempt
+        // This allows the component to retry showing data if the error was transient
+        if (isMounted.current) setFetchError(null);
 
         try {
-            // Clear non-critical errors before each fetch attempt *after* the initial one
-            // This prevents old non-critical errors from sticking around indefinitely
-            if (!isInitialFetchAttempt.current && localFetchError && !(localFetchError.includes('Job Fetch Failed') || localFetchError.includes('Job API Error'))) {
-                if(isMounted.current) setFetchError(null); // Clear only non-critical errors
-            } else if (isInitialFetchAttempt.current) {
-                if(isMounted.current) setFetchError(null); // Clear all errors on very first attempt
-            }
-
-
             // --- Fetch all endpoints concurrently ---
             const results = await Promise.allSettled([
                 fetch(API_STATUS_ENDPOINT, { headers: { 'accept': 'application/json' }, cache: 'no-store' }),
-                fetch(API_TODO_ENDPOINT, { method: 'POST', headers: { 'accept': 'application/json' }, body: '', cache: 'no-store' }), // POST with empty body
-                fetch(API_PROGRESS_ENDPOINT, { method: 'POST', headers: { 'accept': 'application/json' }, body: '', cache: 'no-store' }) // POST with empty body
+                fetch(API_TODO_ENDPOINT, { method: 'POST', headers: { 'accept': 'application/json' }, body: '', cache: 'no-store' }),
+                fetch(API_PROGRESS_ENDPOINT, { method: 'POST', headers: { 'accept': 'application/json' }, body: '', cache: 'no-store' })
             ]);
 
             const [statusRes, todoRes, progressRes] = results;
 
             // --- 1. Process Device Status ---
-            if (statusRes.status === 'fulfilled') {
-                if (statusRes.value.ok) {
-                    try {
-                        const data = await statusRes.value.json();
-                        if (data && typeof data.time === 'number') {
-                            const nowSeconds = Math.floor(Date.now() / 1000);
-                            const deviceTimeSeconds = Math.floor(data.time);
-                            const timeDiff = nowSeconds - deviceTimeSeconds;
-                            // Check timeDiff >= 0 to avoid issues with device clock being ahead
-                            fetchedDeviceOnline = timeDiff >= 0 && timeDiff < DEVICE_ONLINE_THRESHOLD_SECONDS;
-                            fetchedLastUpdate = deviceTimeSeconds * 1000;
-                            deviceStatusFetchOk = true;
-                        } else { errors.push("Invalid device status format."); }
-                    } catch (e) { errors.push("Failed to parse device status JSON."); }
-                } else { errors.push(`Device Status API Error: ${statusRes.value.status} ${statusRes.value.statusText}`); }
-            } else { errors.push(`Device Status Fetch Failed: ${statusRes.reason?.message || 'Network Error'}`); }
+            if (statusRes.status === 'fulfilled' && statusRes.value.ok) {
+                try {
+                    const data = await statusRes.value.json();
+                    if (data && typeof data.time === 'number') {
+                        const nowSeconds = Math.floor(Date.now() / 1000);
+                        const deviceTimeSeconds = Math.floor(data.time);
+                        const timeDiff = nowSeconds - deviceTimeSeconds;
+                        fetchedDeviceOnline = timeDiff >= 0 && timeDiff < DEVICE_ONLINE_THRESHOLD_SECONDS;
+                        fetchedLastUpdate = deviceTimeSeconds * 1000;
+                    } else { nonCriticalErrors.push("Invalid device status format."); }
+                } catch (e) { nonCriticalErrors.push("Failed to parse device status JSON."); }
+            } else {
+                // Treat device status fetch failure/error as non-critical for job display
+                const errorDetail = statusRes.status === 'rejected' ? (statusRes.reason?.message || 'Network Error') : `${statusRes.value.status} ${statusRes.value.statusText}`;
+                nonCriticalErrors.push(`Device Status Error: ${errorDetail}`);
+            }
+
 
             // --- 2. Process Job Status (toDo endpoint) ---
-            if (todoRes.status === 'rejected') {
-                // If todo fetch fails, it's a critical error affecting job display
-                criticalErrorOccurred = true;
+            // This is the most critical fetch - if it fails, we have no job info.
+            let jobFetchSuccessButNoJob = false; // Flag for 404 or empty array response
+            if (todoRes.status === 'fulfilled') {
+                if (todoRes.value.ok) {
+                    try {
+                        const data = await todoRes.value.json();
+                        // Check if data is an array and has at least one item with jobid
+                        if (Array.isArray(data) && data.length > 0 && data[0]?.jobid) {
+                            fetchedJobData = data[0]; // Assuming the first item is the current job
+                        } else {
+                            // API returned OK but no job data (e.g., empty array)
+                            jobFetchSuccessButNoJob = true;
+                        }
+                    } catch (e) {
+                        // JSON parsing failed for todo endpoint - this IS critical
+                        throw new Error(`Failed to parse Job JSON: ${e.message}`);
+                    }
+                } else if (todoRes.value.status === 404) {
+                    // API returned 404, explicitly stating no job
+                    jobFetchSuccessButNoJob = true;
+                } else {
+                    // Any other non-OK status from todo endpoint is a critical error
+                    throw new Error(`Job API Error: ${todoRes.value.status} ${todoRes.value.statusText}`);
+                }
+            } else {
+                // todo endpoint request failed (network error etc) - this IS critical
                 throw new Error(`Job Fetch Failed: ${todoRes.reason?.message || 'Network Error'}`);
             }
-            jobFetchOk = true; // Fetch call itself succeeded, regardless of response status
-            if (todoRes.value.ok) {
-                try {
-                    const data = await todoRes.value.json();
-                    // Check if data is an array and has at least one item with jobid
-                    if (Array.isArray(data) && data.length > 0 && data[0]?.jobid) {
-                        fetchedJobData = data[0]; // Assuming the first item is the current job
-                        jobDataFound = true;
-                    } else {
-                        // API returned OK but no job data (e.g., empty array)
-                        jobDataFound = false;
-                        if (localCurrentJobId) jobDisappeared = true; // Job was there, now isn't
+
+
+            // --- 3. Process Progress (ONLY if job data was successfully obtained) ---
+            if (fetchedJobData) {
+                if (progressRes.status === 'fulfilled' && progressRes.value.ok) {
+                    try {
+                        const data = await progressRes.value.json();
+                        // Check if data is an object and has 'output' as a finite number
+                        if (data && typeof data.output === 'number' && isFinite(data.output)) {
+                            // Assuming output is 0-1, convert to 0-100
+                            let calc = Math.round(data.output * 100);
+                            fetchedProgress = Math.max(0, Math.min(100, calc));
+                        } else { nonCriticalErrors.push("Invalid progress format or value."); }
+                    } catch (e) { nonCriticalErrors.push("Failed to parse progress JSON."); }
+                } else {
+                    // Progress fetch failed - non-critical unless it's the only error AND job needs progress
+                    const errorDetail = progressRes.status === 'rejected' ? (progressRes.reason?.message || 'Network Error') : `${progressRes.value.status} ${progressRes.value.statusText}`;
+                    nonCriticalErrors.push(`Progress Error: ${errorDetail}`);
+
+                    // Fallback: if progress fetch failed but the job is the same, keep the old progress
+                    if (fetchedJobData?.jobid === localCurrentJobId) {
+                        fetchedProgress = localProgressPercent;
                     }
-                } catch (e) {
-                    // JSON parsing failed for todo endpoint
-                    criticalErrorOccurred = true; // Treat as critical because we can't read job data
-                    throw new Error("Failed to parse job JSON response.");
+                    // Note: If progress fetch fails for a *new* job, fetchedProgress remains 0.
                 }
-            } else if (todoRes.value.status === 404) {
-                // API returned 404, explicitly stating no job
-                jobDataFound = false;
-                if (localCurrentJobId) jobDisappeared = true; // Job was there, now isn't
             } else {
-                // Any other non-OK status from todo endpoint is a critical error
-                criticalErrorOccurred = true;
-                throw new Error(`Job API Error: ${todoRes.value.status} ${todoRes.value.statusText}`);
-            }
-
-
-            // --- 3. Process Progress (if job data found) ---
-            if (jobDataFound) {
-                // If job was found *and* progress fetch failed, we might use the old progress
-                // Or, if the job is new, progress is 0.
-                fetchedProgress = 0; // Reset optimistic local progress assumption for new job
-                progressFetchOk = false; // Assume failure until proven otherwise
-                if (progressRes.status === 'fulfilled') {
-                    if (progressRes.value.ok) {
-                        try {
-                            const data = await progressRes.value.json();
-                            // Check if data is an object and has 'output' as a finite number
-                            if (data && typeof data.output === 'number' && isFinite(data.output)) {
-                                // Assuming output is 0-1, convert to 0-100
-                                let calc = Math.round(data.output * 100);
-                                fetchedProgress = Math.max(0, Math.min(100, calc));
-                                progressFetchOk = true;
-                            } else { errors.push("Invalid progress format or value."); }
-                        } catch (e) { errors.push("Failed to parse progress JSON."); }
-                    } else { errors.push(`Progress API Error: ${progressRes.value.status} ${progressRes.value.statusText}`); }
-                } else { errors.push(`Progress Fetch Failed: ${progressRes.reason?.message || 'Network Error'}`); }
-
-                // If progress fetch failed BUT the job is the same as before, use previous progress
-                if (!progressFetchOk && fetchedJobData?.jobid === localCurrentJobId) {
-                    fetchedProgress = localProgressPercent;
-                    // Non-critical error "Using previous progress..." added implicitly via errors array
-                }
-                // Note: If progress fetch fails for a *new* job, fetchedProgress remains 0.
-
-            } else {
-                // If no job data found (jobDisappeared is true or was already idle), reset progress
+                // No job data found (fetchedJobData is null), so progress is 0.
                 fetchedProgress = 0;
+                // If the job was there before but is now gone, add a non-critical message.
+                if (localCurrentJobId !== null && jobFetchSuccessButNoJob) {
+                    nonCriticalErrors.push("Job completed/cleared remotely.");
+                }
             }
 
 
-            // --- Update State Based on Fetched Data and Comparisons ---
+            // --- Update State Based on Fetched Data and Errors ---
             if (!isMounted.current) return; // Check again before setting state
 
-            const jobIdentityChanged = fetchedJobData?.jobid !== localCurrentJobId;
-            const progressChanged = fetchedProgress !== localProgressPercent;
-            const onlineStatusChanged = fetchedDeviceOnline !== localDeviceIsOnline;
-            const lastUpdateChanged = fetchedLastUpdate !== localLastDeviceUpdate;
-            // Determine final error state: keep critical errors, or use new non-critical errors
-            const newErrorString = errors.length > 0 ? errors.join('; ') : null;
-            // If critical error occurred in THIS run, its message takes precedence
-            const finalErrorString = criticalErrorOccurred
-                ? (error?.message || 'A critical error occurred during fetch.') // Use the caught error message
-                : (jobFetchOk && !jobDataFound && localCurrentJobId ? "Job completed/cleared remotely." : newErrorString); // If job disappeared AND no critical error, show message. Otherwise, show non-critical errors.
-
-            const errorChanged = finalErrorString !== localFetchError;
-
-            // Update Job and Progress states
-            if (jobIdentityChanged) {
-                setCurrentJob(fetchedJobData);
+            // Update job and progress states
+            // Only update if the job changed OR the job is the same but progress changed
+            if (fetchedJobData?.jobid !== localCurrentJobId) {
+                setCurrentJob(fetchedJobData); // Will be null if no job found
                 setProgressPercent(fetchedProgress);
-                // If job disappeared, collapse details
-                if (!fetchedJobData) setIsExpanded(false);
-            } else if (progressChanged) {
+                if (!fetchedJobData) setIsExpanded(false); // Collapse if job is gone
+            } else if (fetchedJobData && fetchedProgress !== localProgressPercent) {
+                // Job is the same, only progress changed
                 setProgressPercent(fetchedProgress);
+            } else if (!fetchedJobData && localCurrentJobId !== null) {
+                // Job was present but is now gone (caught by jobFetchSuccessButNoJob)
+                setCurrentJob(null);
+                setProgressPercent(0);
+                setIsExpanded(false); // Ensure collapse
             }
 
-            // Update Online Status and Last Update time
-            if (onlineStatusChanged) setDeviceIsOnline(fetchedDeviceOnline);
-            if (lastUpdateChanged) setLastDeviceUpdate(fetchedLastUpdate);
 
-            // Update Error State
-            // Only update error state if it changed AND either it's a critical error
-            // OR it's a non-critical error AND no critical error occurred in this run.
-            if (errorChanged) {
-                // If a critical error just occurred, overwrite any existing error
-                if (criticalErrorOccurred) {
-                    setFetchError(error?.message || 'A critical error occurred.');
-                } else {
-                    // If no critical error this run, update with non-critical or cleared error
-                    setFetchError(finalErrorString);
-                }
+            // Update online status and last update time
+            setDeviceIsOnline(fetchedDeviceOnline);
+            setLastDeviceUpdate(fetchedLastUpdate);
+
+            // Update error state with non-critical errors
+            if (nonCriticalErrors.length > 0) {
+                setFetchError(nonCriticalErrors.join('; '));
+            } else {
+                setFetchError(null); // Clear any previous non-critical errors if this fetch was clean
             }
 
 
         } catch (error) {
-            // This block specifically catches errors thrown *within* the try block
-            // (like from raise_for_status or explicit throws)
+            // This catch block handles critical errors thrown inside the try block
             console.error("Critical fetch error caught:", error);
             if (!isMounted.current) return; // Check again before setting state
 
@@ -259,30 +229,31 @@ function CurrentJobDisplay() {
             // Reset other states as a critical error means we can't trust the current state
             setCurrentJob(null);
             setProgressPercent(0);
-            setDeviceIsOnline(false);
+            setDeviceIsOnline(false); // Assume offline if job fetch failed critically
             setLastDeviceUpdate(null);
             setIsExpanded(false);
 
         } finally {
-            // *** Key Change: Only set isLoading false on the *first* attempt ***
+            // Only set isLoading false on the *first* attempt
             if (isMounted.current && isInitialFetchAttempt.current) {
                 setIsLoading(false);
                 isInitialFetchAttempt.current = false; // Mark initial fetch as done
             }
-            // If critical error happened in the try block, ensure error state is set by the catch block.
-            // If it happened in the finally block (less likely), handle it here if needed.
         }
-    }, [isExpanded, currentJob?.jobid, progressPercent, deviceIsOnline, fetchError, lastDeviceUpdate]); // Dependencies updated
+    }, [isExpanded, currentJob?.jobid, progressPercent]); // Reduced dependencies based on state variables used *before* update
 
-    // --- Derived Status Calculation ---
-    // MODIFIED: Added 'completed' state logic
+    // --- Derived Status Calculation (Keep as is) ---
     const derivedStatus = useMemo(() => {
-        // Loading state is now only true very briefly on initial mount
         if (isLoading) return 'loading';
 
-        // Check critical error first
-        // Check if fetchError contains a critical error message
-        const isCriticalError = fetchError && (fetchError.includes('Job Fetch Failed') || fetchError.includes('Job API Error') || fetchError.includes('Failed to parse job JSON'));
+        // Check if fetchError indicates a critical error
+        const isCriticalError = fetchError && (
+            fetchError.includes('Job Fetch Failed') ||
+            fetchError.includes('Job API Error') ||
+            fetchError.includes('Failed to parse Job JSON') ||
+            fetchError.includes('Unexpected Error') // Catch the fallback error too
+        );
+
         if (isCriticalError) {
             return 'error';
         }
@@ -299,13 +270,12 @@ function CurrentJobDisplay() {
         // If no job exists and no critical error
         return 'idle';
 
-    }, [isLoading, currentJob, deviceIsOnline, fetchError, progressPercent]); // Add progressPercent to dependencies
+    }, [isLoading, currentJob, deviceIsOnline, fetchError, progressPercent]);
 
-    // --- Effect for Initial Fetch & Polling ---
+    // --- Effect for Initial Fetch & Polling (Keep as is) ---
     useEffect(() => {
         isMounted.current = true;
         isInitialFetchAttempt.current = true; // Ensure flag is true on mount
-        // Don't set isLoading(true) here, it's the default state
 
         // Initial Fetch
         fetchAllStatus(); // Call without arguments
@@ -322,42 +292,36 @@ function CurrentJobDisplay() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fetchAllStatus]); // fetchAllStatus is memoized
 
-    // --- Effect to Auto-collapse on Idle or Critical Error ---
-    // MODIFIED: Now also auto-collapses on completion
+    // --- Effect to Auto-collapse (Keep as is) ---
     useEffect(() => {
         if ((derivedStatus === 'idle' || derivedStatus === 'error' || derivedStatus === 'completed') && isExpanded) {
             setIsExpanded(false);
         }
     }, [derivedStatus, isExpanded]);
 
-    // --- Toggle Handler ---
+    // --- Toggle Handler (Keep as is) ---
     const toggleExpand = () => {
-        // MODIFIED: Allow expanding if currentJob exists AND status is not error/loading/idle
         if (currentJob && (derivedStatus === 'running' || derivedStatus === 'paused' || derivedStatus === 'completed')) {
             setIsExpanded(prev => !prev);
         }
     };
 
-    // --- Helper to get Status Badge ---
-    // MODIFIED: Added 'completed' case
+    // --- Helper to get Status Badge (Keep as is) ---
     const getStatusBadge = useMemo(() => {
         switch (derivedStatus) {
             case 'completed':
-                // Displaying last update for completed status might be useful
                 return (
                     <span className="inline-flex items-center gap-x-1.5 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700 shadow-sm border border-green-200" title={`Completed. Last device update: ${lastDeviceUpdate ? new Date(lastDeviceUpdate).toLocaleTimeString() : 'N/A'}`}>
                         <FontAwesomeIcon icon={faCheckCircle} className="w-4 h-4" /> Completed
                     </span>
                 );
             case 'running':
-                // Use Online/Offline status title for running/paused
                 return ( <span className="inline-flex items-center gap-x-1.5 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700 shadow-sm border border-green-200" title={`Device online. Last update: ${lastDeviceUpdate ? new Date(lastDeviceUpdate).toLocaleTimeString() : 'N/A'}`}><FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin" /> In Progress</span> );
             case 'paused':
                 return ( <span className="inline-flex items-center gap-x-1.5 rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700 shadow-sm border border-orange-200" title={`Device offline or unresponsive. Last update: ${lastDeviceUpdate ? new Date(lastDeviceUpdate).toLocaleTimeString() : 'N/A'}`}><FontAwesomeIcon icon={faPause} className="w-4 h-4" /> Paused</span> );
             case 'idle':
                 return ( <span className="inline-flex items-center gap-x-1.5 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 shadow-sm border border-gray-200"><FontAwesomeIcon icon={faPauseCircle} className="w-4 h-4" /> Idle</span> );
             case 'error':
-                // Display fetchError in title for error state
                 return ( <span className="inline-flex items-center gap-x-1.5 rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-700 shadow-sm border border-red-200" title={fetchError || 'An error occurred'}><FontAwesomeIcon icon={faExclamationCircle} className="w-4 h-4" /> Error</span> );
             case 'loading':
                 return ( <span className="inline-flex items-center gap-x-1.5 rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-600 shadow-sm border border-blue-200"><FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin"/> Loading...</span> );
@@ -365,11 +329,10 @@ function CurrentJobDisplay() {
         }
     }, [derivedStatus, lastDeviceUpdate, fetchError]);
 
-    // --- Determine if details section can be shown/expanded ---
-    // MODIFIED: Include 'completed' in canShowDetails
+    // --- Determine if details section can be shown/expanded (Keep as is) ---
     const canShowDetails = (derivedStatus === 'running' || derivedStatus === 'paused' || derivedStatus === 'completed') && !!currentJob;
 
-    // --- Render ---
+    // --- Render (Keep as is) ---
     return (
         <div className="p-4 max-w-2xl mx-auto">
             <div className="bg-gradient-to-br from-white/70 via-white/80 to-cyan-50/60 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-gray-200/80 relative min-h-[120px]">
@@ -398,7 +361,7 @@ function CurrentJobDisplay() {
                             <p className="text-red-700 font-semibold text-lg">Status Update Failed</p>
                             <p className="text-sm text-red-600 mt-1 max-w-md">{fetchError || 'An unknown critical error occurred.'}</p>
                             {/* Only show retry if it's a critical fetch/API error */}
-                            {(fetchError?.includes('Fetch Failed') || fetchError?.includes('Network Error') || fetchError?.includes('API Error') || fetchError?.includes('Failed to parse')) && (
+                            {(fetchError?.includes('Job Fetch Failed') || fetchError?.includes('Network Error') || fetchError?.includes('Job API Error') || fetchError?.includes('Failed to parse') || fetchError?.includes('Unexpected Error')) && (
                                 <button
                                     onClick={() => fetchAllStatus()} // Call without args, won't trigger main loading overlay
                                     className="mt-4 px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
